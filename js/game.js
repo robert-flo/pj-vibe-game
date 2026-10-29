@@ -162,6 +162,8 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.18;
 container.appendChild(renderer.domElement);
 
 // Iluminación para Escena de Juego
@@ -188,28 +190,49 @@ scene.add(headSceneGroup);
 const headPivot = new THREE.Group();
 headSceneGroup.add(headPivot);
 
-// Iluminación de estudio estilo Mario 64 para la cabeza
-const headLightFront = new THREE.DirectionalLight(0xffffff, 2.2);
-headLightFront.position.set(0, 102, 6);
-scene.add(headLightFront);
+// Iluminación cálida y halagadora de estudio fotográfico (elimina sombras tétricas y da vida)
+const headAmbient = new THREE.AmbientLight(0xfff5ea, 1.7); // Luz ambiental cálida suave
+headSceneGroup.add(headAmbient);
 
-const headLightFill = new THREE.PointLight(0x93c5fd, 3.0, 20);
-headLightFill.position.set(-4, 101, 3);
-scene.add(headLightFill);
+const headKeyLight = new THREE.DirectionalLight(0xfffaee, 1.8); // Luz principal frontal suave
+headKeyLight.position.set(1.2, 102.5, 5.0);
+scene.add(headKeyLight);
+
+const headWarmFill = new THREE.PointLight(0xffeedb, 1.3, 25); // Relleno melocotón cálido lateral
+headWarmFill.position.set(-3.0, 101.5, 3.5);
+scene.add(headWarmFill);
+
+const eyeCatchlight = new THREE.PointLight(0xffffff, 1.1, 15); // Destello blanco en los ojos (pupila viva)
+eyeCatchlight.position.set(0.0, 100.3, 4.3);
+scene.add(eyeCatchlight);
 
 let bukeleHeadMesh = null;
 const gltfLoader = new GLTFLoader();
 
-// Carga de bukele_head.glb (Modelo fotorrealista Tripo optimizado)
+// Carga de bukele_head.glb (Modelo fotorrealista Tripo optimizado y suavizado)
 gltfLoader.load(
   'assets/models/bukele_head.glb',
   (gltf) => {
     bukeleHeadMesh = gltf.scene;
+
+    // Suavizado total de normales y acabado de piel natural cálido
+    bukeleHeadMesh.traverse((child) => {
+      if (child.isMesh) {
+        child.material.flatShading = false;
+        child.material.roughness = 0.58; // Piel mate natural, elimina reflejos plásticos
+        child.material.metalness = 0.0;
+        child.material.needsUpdate = true;
+        if (child.geometry) {
+          child.geometry.computeVertexNormals();
+        }
+      }
+    });
+
     bukeleHeadMesh.scale.set(1.45, 1.45, 1.45);
     bukeleHeadMesh.position.set(0, -0.2, 0);
     bukeleHeadMesh.rotation.y = -Math.PI / 2; // Orientar exactamente de frente a la cámara
     headPivot.add(bukeleHeadMesh);
-    console.log('[GLTF] Cabeza oficial bukele_head.glb cargada y orientada de frente.');
+    console.log('[GLTF] Cabeza oficial bukele_head.glb cargada con iluminacion calida y piel suave.');
   },
   undefined,
   (err) => console.warn('[GLTF Error] bukele_head.glb:', err)
