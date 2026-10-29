@@ -16,7 +16,10 @@
   </script>
 </head>
 <body>
-  <!-- Canvas 3D de Three.js -->
+  <!-- Fondo Mosaico Azul N64 para la Escena 2 (Capa 1) -->
+  <div id="head-bg-mosaic" class="head-bg-mosaic hidden"></div>
+
+  <!-- Canvas 3D de Three.js (Capa 2) -->
   <div id="game-container"></div>
 
   <!-- ==========================================
@@ -43,7 +46,6 @@
           <span class="letter block-green" data-char="L">L</span>
           <span class="letter block-blue" data-char="E">E</span>
           
-          <!-- Número 64 3D -->
           <div class="logo-64">
             <span class="num64">64</span>
             <span class="trademark">TM</span>
@@ -65,12 +67,9 @@
   </div>
 
   <!-- ==========================================
-       ESCENA 2: PANTALLA DE LA CARA 3D (MARIO 64 HEAD)
+       ESCENA 2: OVERLAY DE LA CARA 3D (Capa 3)
        ========================================== -->
-  <div id="scene-2-head" class="head-scene hidden">
-    <!-- Fondo azul con mosaico N64 -->
-    <div class="head-bg-mosaic"></div>
-
+  <div id="scene-2-overlay" class="head-overlay hidden">
     <!-- Texto Rainbow PRESS START (Inferior Izquierda) -->
     <div id="btn-scene-2-start" class="rainbow-press-start">
       <div class="rainbow-row">
@@ -90,7 +89,7 @@
     </div>
 
     <div class="scene-2-hint">
-      Mueve el ratón para rotar la cabeza &bull; Haz click para entrar al castillo
+      Mueve el ratón para mover la cabeza &bull; Haz click para entrar al juego
     </div>
   </div>
 
@@ -108,7 +107,6 @@
     </div>
   </div>
 
-  <!-- Indicador de Controles en Pantalla -->
   <div id="controls-hint" class="hidden">
     <p><strong>[WASD / Flechas]</strong> Moverse &nbsp;|&nbsp; <strong>[Espacio]</strong> Saltar &nbsp;|&nbsp; <strong>[Ratón / Q-E]</strong> Girar cámara</p>
   </div>

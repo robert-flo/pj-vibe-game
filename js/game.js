@@ -157,7 +157,7 @@ scene.background = new THREE.Color(0x7dd3fc);
 scene.fog = new THREE.FogExp2(0x7dd3fc, 0.012);
 
 const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 500);
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
@@ -481,11 +481,13 @@ const SCENE_3_GAMEPLAY = 3;
 const SCENE_VICTORY = 4;
 
 let currentScene = SCENE_1_TITLE;
+let scene2EnterTime = 0;
 
+const headBgMosaic = document.getElementById('head-bg-mosaic');
 const scene1Title = document.getElementById('scene-1-title');
 const btnScene1Start = document.getElementById('btn-scene-1-start');
 
-const scene2Head = document.getElementById('scene-2-head');
+const scene2Overlay = document.getElementById('scene-2-overlay');
 const btnScene2Start = document.getElementById('btn-scene-2-start');
 
 const hud = document.getElementById('hud');
@@ -501,28 +503,42 @@ function goToScene2() {
   audio.init();
   audio.playStartChime();
 
+  currentScene = SCENE_2_HEAD;
+  scene2EnterTime = performance.now();
+  scene.background = null; // Canvas transparente para proyectar la cabeza sobre el mosaico
   scene1Title.classList.remove('active');
-  setTimeout(() => {
-    scene2Head.classList.remove('hidden');
-    currentScene = SCENE_2_HEAD;
-  }, 400);
+  headBgMosaic.classList.remove('hidden');
+  scene2Overlay.classList.remove('hidden');
 }
 
 // Transición: Escena 2 -> Escena 3 (Gameplay)
 function goToScene3() {
   if (currentScene !== SCENE_2_HEAD) return;
+  // Cooldown de 1.2 segundos para evitar saltarse la Escena 2 por clics accidentales
+  if (performance.now() - scene2EnterTime < 1200) return;
+
   audio.init();
   audio.playLetsGoChime();
 
-  scene2Head.classList.add('hidden');
+  currentScene = SCENE_3_GAMEPLAY;
+  scene.background = new THREE.Color(0x7dd3fc); // Fondo cielo diurno de pradera
+  headBgMosaic.classList.add('hidden');
+  scene2Overlay.classList.add('hidden');
   hud.classList.remove('hidden');
   controlsHint.classList.remove('hidden');
-
-  currentScene = SCENE_3_GAMEPLAY;
 }
 
-btnScene1Start.addEventListener('click', goToScene2);
-btnScene2Start.addEventListener('click', goToScene3);
+scene1Title.addEventListener('click', () => goToScene2());
+btnScene1Start.addEventListener('click', (e) => {
+  e.stopPropagation();
+  goToScene2();
+});
+
+// En Escena 2, solo el botón Rainbow PRESS START o la tecla Espacio avanzan a la Escena 3
+btnScene2Start.addEventListener('click', (e) => {
+  e.stopPropagation();
+  goToScene3();
+});
 btnRestart.addEventListener('click', () => location.reload());
 
 /* ==========================================================================
@@ -580,10 +596,9 @@ window.addEventListener('mousedown', (e) => {
     previousMouseX = e.clientX;
     audio.init();
 
+    // Solo avanzar de Escena 1 a Escena 2
     if (currentScene === SCENE_1_TITLE) {
       goToScene2();
-    } else if (currentScene === SCENE_2_HEAD) {
-      goToScene3();
     }
   }
 });
