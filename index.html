@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Super Bukele 64: Misión Rescate</title>
+  <title>Super Bukele 64</title>
   <link rel="stylesheet" href="css/style.css">
   <!-- Three.js via CDN con Import Maps -->
   <script type="importmap">
@@ -16,11 +16,58 @@
   </script>
 </head>
 <body>
-  <!-- Canvas 3D -->
+  <!-- Canvas 3D de Three.js -->
   <div id="game-container"></div>
 
-  <!-- HUD Superior -->
-  <div id="hud">
+  <!-- ==========================================
+       ESCENA 1: PANTALLA DE TÍTULO (HOMENAJE N64)
+       ========================================== -->
+  <div id="title-screen" class="title-scene active">
+    <div class="title-wrapper">
+      <div class="logo-container">
+        <!-- Fila SUPER -->
+        <div class="logo-row row-super">
+          <span class="letter block-red" data-char="S">S</span>
+          <span class="letter block-blue" data-char="U">U</span>
+          <span class="letter block-yellow" data-char="P">P</span>
+          <span class="letter block-blue" data-char="E">E</span>
+          <span class="letter block-green" data-char="R">R</span>
+        </div>
+
+        <!-- Fila BUKELE + 64 -->
+        <div class="logo-row row-bukele">
+          <span class="letter block-blue" data-char="B">B</span>
+          <span class="letter block-green" data-char="U">U</span>
+          <span class="letter block-yellow" data-char="K">K</span>
+          <span class="letter block-red" data-char="E">E</span>
+          <span class="letter block-green" data-char="L">L</span>
+          <span class="letter block-blue" data-char="E">E</span>
+          
+          <!-- Número 64 3D -->
+          <div class="logo-64">
+            <span class="num64">64</span>
+            <span class="trademark">TM</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Texto de Licencia N64 (©2026 Kodigo Academy) -->
+      <div class="copyright-n64">
+        &copy;2026 Kodigo Academy
+      </div>
+
+      <!-- Botón / Indicador Pulsante PRESS START -->
+      <div id="btn-press-start" class="press-start-container">
+        <span class="press-start-text">PRESS START</span>
+        <span class="press-start-sub">HAZ CLICK O PULSA ESPACIO PARA COMENZAR</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       ESCENA 2: HUD DURANTE EL JUEGO
+       ========================================== -->
+  <div id="hud" class="hidden">
     <div class="hud-item coins-counter">
       <span class="coin-icon">₿</span>
       <span id="coin-count">0</span> / <span id="coin-total">5</span>
@@ -31,30 +78,14 @@
     </div>
   </div>
 
-  <!-- Controles flotantes en pantalla / Instrucciones -->
-  <div id="controls-hint">
+  <!-- Indicador de Controles en Pantalla -->
+  <div id="controls-hint" class="hidden">
     <p><strong>[WASD / Flechas]</strong> Moverse &nbsp;|&nbsp; <strong>[Espacio]</strong> Saltar &nbsp;|&nbsp; <strong>[Ratón / Q-E]</strong> Girar cámara</p>
   </div>
 
-  <!-- Modal de Inicio -->
-  <div id="start-overlay" class="overlay active">
-    <div class="card">
-      <h1>⭐ Super Bukele 64 ⭐</h1>
-      <h3 class="subtitle">Misión: Rescate de la Princesa Gabriela</h3>
-      <p class="story">
-        ¡Bowser ha secuestrado a la Primera Dama Gabriela y la mantiene cautiva en la fortaleza!
-        Para romper el primer candado mágico, Nayib debe recolectar los <strong>Bitcoins</strong> dorados y alcanzar la <strong>Estrella de la Libertad</strong> en la cima de la colina.
-      </p>
-      <div class="controls-guide">
-        <div><strong>W, A, S, D</strong> o Flechas para moverte</div>
-        <div><strong>Barra Espaciadora</strong> para saltar</div>
-        <div><strong>Arrastrar Ratón o Q / E</strong> para rotar la cámara</div>
-      </div>
-      <button id="btn-start" class="btn primary-btn">🎮 Iniciar Misión</button>
-    </div>
-  </div>
-
-  <!-- Modal de Victoria -->
+  <!-- ==========================================
+       MODAL DE VICTORIA
+       ========================================== -->
   <div id="victory-modal" class="overlay">
     <div class="card victory-card">
       <div class="star-animation">⭐</div>
