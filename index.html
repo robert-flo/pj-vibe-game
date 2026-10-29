@@ -189,7 +189,48 @@
   </div>
 
   <!-- ==========================================
-       ESCENA 4: HUD DURANTE EL JUEGO
+       ESCENA 4: LA CARTA DE GABRIELA (N64 HOMAGE)
+       ========================================== -->
+  <div id="scene-letter" class="letter-scene hidden">
+    <div class="letter-board">
+      <div class="letter-parchment">
+        <div class="letter-content">
+          <p class="letter-greeting">Querido Nayib:</p>
+          <p class="letter-body">
+            Por favor ven al castillo.<br />
+            Te he preparado una sorpresa...
+          </p>
+          <div class="letter-signature-block">
+            <p class="letter-farewell">Con cariño--</p>
+            <p class="letter-author-title">Primera Dama</p>
+            <p class="letter-author-name">Gabriela</p>
+          </div>
+          <div class="letter-seal">
+            <span class="seal-icon">👑</span>
+          </div>
+        </div>
+      </div>
+      <div class="letter-continue-hint">
+        Pulsa [ESPACIO] o haz clic para continuar
+      </div>
+    </div>
+    <audio id="audio-letter" preload="auto" src="assets/audio/letter_bgm.mp3"></audio>
+  </div>
+
+  <!-- ==========================================
+       ESCENA 5: CINEMÁTICA VUELO AL CASTILLO (LAKITU)
+       ========================================== -->
+  <div id="scene-cinematic" class="cinematic-scene hidden">
+    <video id="cinematic-video" playsinline preload="auto">
+      <source src="assets/video/lakitu_castle_flight.mp4" type="video/mp4" />
+    </video>
+    <div id="btn-skip-cinematic" class="cinematic-skip-hint">
+      Pulsa [ESPACIO] para saltar cinemática ⏩
+    </div>
+  </div>
+
+  <!-- ==========================================
+       ESCENA 6: HUD DURANTE EL JUEGO
        ========================================== -->
   <div id="hud" class="hidden">
     <div class="hud-item coins-counter">

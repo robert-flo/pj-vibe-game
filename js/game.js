@@ -505,8 +505,10 @@ const star = createStar();
 const SCENE_1_TITLE = 1;
 const SCENE_2_HEAD = 2;
 const SCENE_3_FILESELECT = 3;
-const SCENE_4_GAMEPLAY = 4;
-const SCENE_VICTORY = 5;
+const SCENE_4_LETTER = 4;
+const SCENE_5_CINEMATIC = 5;
+const SCENE_6_GAMEPLAY = 6;
+const SCENE_VICTORY = 7;
 
 let currentScene = SCENE_1_TITLE;
 let scene2EnterTime = 0;
@@ -520,6 +522,12 @@ const btnScene2Start = document.getElementById('btn-scene-2-start');
 
 const scene3FileSelect = document.getElementById('scene-3-fileselect');
 const n64HandCursor = document.getElementById('n64-hand-cursor');
+
+const sceneLetter = document.getElementById('scene-letter');
+const audioLetter = document.getElementById('audio-letter');
+const sceneCinematic = document.getElementById('scene-cinematic');
+const cinematicVideo = document.getElementById('cinematic-video');
+const btnSkipCinematic = document.getElementById('btn-skip-cinematic');
 
 const hud = document.getElementById('hud');
 const controlsHint = document.getElementById('controls-hint');
@@ -568,15 +576,56 @@ function goToScene3() {
   });
 }
 
-// Transición: Escena 3 -> Escena 4 (Gameplay 3D)
-function goToScene4() {
+// Transición: Escena 3 -> Escena 4 (La Carta de Gabriela)
+function goToSceneLetter() {
   if (currentScene !== SCENE_3_FILESELECT) return;
+
+  audio.init();
+  audio.playStartChime();
+
+  currentScene = SCENE_4_LETTER;
+  scene3FileSelect.classList.add('hidden');
+  n64HandCursor.classList.add('hidden');
+  sceneLetter.classList.remove('hidden');
+
+  if (audioLetter) {
+    audioLetter.currentTime = 0;
+    audioLetter.play().catch((err) => console.log('[Audio] letter_bgm blocked:', err));
+  }
+}
+
+// Transición: Escena 4 -> Escena 5 (Cinemática Lakitu volando al Castillo)
+function goToSceneCinematic() {
+  if (currentScene !== SCENE_4_LETTER) return;
+
+  if (audioLetter) {
+    audioLetter.pause();
+  }
+
+  currentScene = SCENE_5_CINEMATIC;
+  sceneLetter.classList.add('hidden');
+  sceneCinematic.classList.remove('hidden');
+
+  if (cinematicVideo) {
+    cinematicVideo.currentTime = 0;
+    cinematicVideo.play().catch((err) => console.log('[Video] cinematic play blocked:', err));
+  }
+}
+
+// Transición: Escena 5 -> Escena 6 (Gameplay 3D)
+function goToSceneGameplay() {
+  if (currentScene !== SCENE_5_CINEMATIC && currentScene !== SCENE_4_LETTER && currentScene !== SCENE_3_FILESELECT) return;
+
+  if (audioLetter) audioLetter.pause();
+  if (cinematicVideo) cinematicVideo.pause();
 
   audio.init();
   audio.playLetsGoChime();
 
-  currentScene = SCENE_4_GAMEPLAY;
+  currentScene = SCENE_6_GAMEPLAY;
   scene.background = new THREE.Color(0x7dd3fc); // Fondo cielo diurno de pradera
+  sceneLetter.classList.add('hidden');
+  sceneCinematic.classList.add('hidden');
   scene3FileSelect.classList.add('hidden');
   n64HandCursor.classList.add('hidden');
   hud.classList.remove('hidden');
@@ -595,31 +644,74 @@ btnScene2Start.addEventListener('click', (e) => {
   goToScene3();
 });
 
-// En Escena 3, cualquier clic en la pantalla SELECT FILE avanza inmediatamente al juego
+// En Escena 3, cualquier clic en la pantalla SELECT FILE avanza a la Carta de Gabriela
 if (scene3FileSelect) {
   scene3FileSelect.addEventListener('click', () => {
-    goToScene4();
+    goToSceneLetter();
+  });
+}
+
+// En Escena 4, clic en la Carta de Gabriela avanza a la cinemática
+if (sceneLetter) {
+  sceneLetter.addEventListener('click', () => {
+    goToSceneCinematic();
+  });
+}
+
+// En Escena 5, fin del video o clic en saltar avanza a Gameplay
+if (cinematicVideo) {
+  cinematicVideo.addEventListener('ended', () => {
+    goToSceneGameplay();
+  });
+}
+if (btnSkipCinematic) {
+  btnSkipCinematic.addEventListener('click', (e) => {
+    e.stopPropagation();
+    goToSceneGameplay();
+  });
+}
+if (sceneCinematic) {
+  sceneCinematic.addEventListener('click', () => {
+    goToSceneGameplay();
   });
 }
 
 btnRestart.addEventListener('click', () => location.reload());
 
-// Soporte de navegación directa por parámetro URL (?scene=2, ?scene=3 o ?scene=4)
+// Soporte de navegación directa por parámetro URL (?scene=2, 3, letter/4, cinematic/5, gameplay/6)
 const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.get('scene') === '2') {
+const requestedScene = urlParams.get('scene');
+if (requestedScene === '2') {
   setTimeout(() => goToScene2(), 100);
-} else if (urlParams.get('scene') === '3') {
+} else if (requestedScene === '3') {
   setTimeout(() => {
     goToScene2();
     scene2EnterTime = 0;
     setTimeout(() => goToScene3(), 50);
   }, 100);
-} else if (urlParams.get('scene') === '4') {
+} else if (requestedScene === 'letter' || requestedScene === '4') {
   setTimeout(() => {
     goToScene2();
     scene2EnterTime = 0;
     goToScene3();
-    setTimeout(() => goToScene4(), 50);
+    setTimeout(() => goToSceneLetter(), 50);
+  }, 100);
+} else if (requestedScene === 'cinematic' || requestedScene === '5') {
+  setTimeout(() => {
+    goToScene2();
+    scene2EnterTime = 0;
+    goToScene3();
+    goToSceneLetter();
+    setTimeout(() => goToSceneCinematic(), 50);
+  }, 100);
+} else if (requestedScene === 'gameplay' || requestedScene === '6') {
+  setTimeout(() => {
+    goToScene2();
+    scene2EnterTime = 0;
+    goToScene3();
+    goToSceneLetter();
+    goToSceneCinematic();
+    setTimeout(() => goToSceneGameplay(), 50);
   }, 100);
 }
 
@@ -657,9 +749,19 @@ window.addEventListener('keydown', (e) => {
     goToScene3();
     return;
   }
-  // En Escena 3, cualquier tecla Enter o Espacio avanza inmediatamente a Gameplay
+  // En Escena 3, cualquier tecla Enter o Espacio avanza a la Carta de Gabriela
   if (currentScene === SCENE_3_FILESELECT && (e.code === 'Space' || e.code === 'Enter')) {
-    goToScene4();
+    goToSceneLetter();
+    return;
+  }
+  // En Escena 4 (Carta), avanzar a la Cinemática
+  if (currentScene === SCENE_4_LETTER && (e.code === 'Space' || e.code === 'Enter')) {
+    goToSceneCinematic();
+    return;
+  }
+  // En Escena 5 (Cinemática), saltar directo a Gameplay
+  if (currentScene === SCENE_5_CINEMATIC && (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape')) {
+    goToSceneGameplay();
     return;
   }
 
@@ -691,7 +793,7 @@ window.addEventListener('mousemove', (e) => {
     previousMouseY = e.clientY;
   }
 
-  if (isDragging && currentScene === SCENE_4_GAMEPLAY) {
+  if (isDragging && currentScene === SCENE_6_GAMEPLAY) {
     const deltaX = e.clientX - previousMouseX;
     cameraAngle -= deltaX * 0.005;
     previousMouseX = e.clientX;
@@ -705,12 +807,15 @@ window.addEventListener('mousedown', (e) => {
     previousMouseY = e.clientY;
     audio.init();
 
-    // Solo avanzar de Escena 1 a Escena 2
+    // Avance secuencial por clic
     if (currentScene === SCENE_1_TITLE) {
       goToScene2();
     } else if (currentScene === SCENE_3_FILESELECT) {
-      // Requisito del usuario: clic en cualquier lugar avanza al gameplay
-      goToScene4();
+      goToSceneLetter();
+    } else if (currentScene === SCENE_4_LETTER) {
+      goToSceneCinematic();
+    } else if (currentScene === SCENE_5_CINEMATIC) {
+      goToSceneGameplay();
     }
   }
 });
@@ -732,7 +837,7 @@ const clock = new THREE.Clock();
 let walkCycle = 0;
 
 function updatePhysics(delta) {
-  if (currentScene !== SCENE_4_GAMEPLAY) return;
+  if (currentScene !== SCENE_6_GAMEPLAY) return;
 
   let moveX = 0;
   let moveZ = 0;
@@ -886,12 +991,12 @@ function updateCamera(delta) {
     return;
   }
 
-  if (currentScene === SCENE_3_FILESELECT) {
-    // Escena 3: Pantalla SELECT FILE es 2D overlay; la cámara 3D se mantiene en reposo
+  if (currentScene === SCENE_3_FILESELECT || currentScene === SCENE_4_LETTER || currentScene === SCENE_5_CINEMATIC) {
+    // Escenas 2D / cinemáticas: la cámara 3D se mantiene en reposo
     return;
   }
 
-  // Escena 4: Cámara de Gameplay en 3ª persona
+  // Escena 6: Cámara de Gameplay en 3ª persona
   const cameraDistance = currentScene === SCENE_VICTORY ? 5.5 : 8.5;
   const cameraHeight = currentScene === SCENE_VICTORY ? 2.5 : 4.0;
 
@@ -910,7 +1015,7 @@ function animate() {
   requestAnimationFrame(animate);
   const delta = Math.min(clock.getDelta(), 0.1);
 
-  if (currentScene >= SCENE_4_GAMEPLAY) {
+  if (currentScene >= SCENE_6_GAMEPLAY) {
     coins.forEach((coin) => {
       if (coin.userData.active) {
         coin.rotation.y += delta * 2.5;
