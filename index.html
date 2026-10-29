@@ -73,7 +73,123 @@
   </div>
 
   <!-- ==========================================
-       ESCENA 3: HUD DURANTE EL JUEGO
+       ESCENA 3: PANTALLA SELECT FILE (N64 HOMAGE)
+       ========================================== -->
+  <div id="scene-3-fileselect" class="fileselect-scene hidden">
+    <div class="fileselect-board">
+      
+      <!-- Título SELECT FILE Multicolor N64 -->
+      <div class="fileselect-header">
+        <span class="sf-char c-green">S</span>
+        <span class="sf-char c-pink">E</span>
+        <span class="sf-char c-yellow">L</span>
+        <span class="sf-char c-green">E</span>
+        <span class="sf-char c-yellow">C</span>
+        <span class="sf-char c-pink">T</span>
+        <span class="sf-space">&nbsp;</span>
+        <span class="sf-char c-green">F</span>
+        <span class="sf-char c-yellow">I</span>
+        <span class="sf-char c-pink">L</span>
+        <span class="sf-char c-green">E</span>
+      </div>
+
+      <!-- Cuadrícula 2x2 de Archivos -->
+      <div class="fileselect-grid">
+        <!-- Slot A -->
+        <div class="file-card">
+          <div class="file-portrait-frame">
+            <img src="assets/img/bukele_file_icon.png" alt="Bukele" class="file-portrait-img" />
+          </div>
+          <div class="file-info">
+            <span class="file-name">BUKELE A</span>
+            <div class="file-status-new">
+              <span class="new-char new-cyan">N</span>
+              <span class="new-char new-yellow">E</span>
+              <span class="new-char new-red">W</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slot B -->
+        <div class="file-card">
+          <div class="file-portrait-frame">
+            <img src="assets/img/bukele_file_icon.png" alt="Bukele" class="file-portrait-img" />
+          </div>
+          <div class="file-info">
+            <span class="file-name">BUKELE B</span>
+            <div class="file-status-new">
+              <span class="new-char new-cyan">N</span>
+              <span class="new-char new-yellow">E</span>
+              <span class="new-char new-red">W</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slot C -->
+        <div class="file-card">
+          <div class="file-portrait-frame">
+            <img src="assets/img/bukele_file_icon.png" alt="Bukele" class="file-portrait-img" />
+          </div>
+          <div class="file-info">
+            <span class="file-name">BUKELE C</span>
+            <div class="file-status-new">
+              <span class="new-char new-cyan">N</span>
+              <span class="new-char new-yellow">E</span>
+              <span class="new-char new-red">W</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slot D -->
+        <div class="file-card">
+          <div class="file-portrait-frame">
+            <img src="assets/img/bukele_file_icon.png" alt="Bukele" class="file-portrait-img" />
+          </div>
+          <div class="file-info">
+            <span class="file-name">BUKELE D</span>
+            <div class="file-status-new">
+              <span class="new-char new-cyan">N</span>
+              <span class="new-char new-yellow">E</span>
+              <span class="new-char new-red">W</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fila de Botones Inferiores -->
+      <div class="fileselect-actions">
+        <div class="action-btn-group">
+          <div class="action-block block-score"></div>
+          <span class="action-label">SCORE</span>
+        </div>
+        <div class="action-btn-group">
+          <div class="action-block block-copy"></div>
+          <span class="action-label">COPY</span>
+        </div>
+        <div class="action-btn-group">
+          <div class="action-block block-erase"></div>
+          <span class="action-label">ERASE</span>
+        </div>
+        <div class="action-btn-group">
+          <div class="action-block block-stereo"></div>
+          <span class="action-label">STEREO</span>
+        </div>
+      </div>
+
+      <!-- Pista interactiva inferior -->
+      <div class="fileselect-hint">
+        👆 Haz clic en cualquier lugar para comenzar la partida
+      </div>
+    </div>
+  </div>
+
+  <!-- Cursor de Mano 3D N64 -->
+  <div id="n64-hand-cursor" class="n64-cursor hidden">
+    <img src="assets/img/n64_hand_cursor.png" alt="Cursor" />
+  </div>
+
+  <!-- ==========================================
+       ESCENA 4: HUD DURANTE EL JUEGO
        ========================================== -->
   <div id="hud" class="hidden">
     <div class="hud-item coins-counter">

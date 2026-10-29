@@ -504,8 +504,9 @@ const star = createStar();
    ========================================================================== */
 const SCENE_1_TITLE = 1;
 const SCENE_2_HEAD = 2;
-const SCENE_3_GAMEPLAY = 3;
-const SCENE_VICTORY = 4;
+const SCENE_3_FILESELECT = 3;
+const SCENE_4_GAMEPLAY = 4;
+const SCENE_VICTORY = 5;
 
 let currentScene = SCENE_1_TITLE;
 let scene2EnterTime = 0;
@@ -516,6 +517,9 @@ const btnScene1Start = document.getElementById('btn-scene-1-start');
 
 const scene2Overlay = document.getElementById('scene-2-overlay');
 const btnScene2Start = document.getElementById('btn-scene-2-start');
+
+const scene3FileSelect = document.getElementById('scene-3-fileselect');
+const n64HandCursor = document.getElementById('n64-hand-cursor');
 
 const hud = document.getElementById('hud');
 const controlsHint = document.getElementById('controls-hint');
@@ -538,19 +542,43 @@ function goToScene2() {
   scene2Overlay.classList.remove('hidden');
 }
 
-// Transición: Escena 2 -> Escena 3 (Gameplay)
+// Transición: Escena 2 -> Escena 3 (Pantalla SELECT FILE)
 function goToScene3() {
   if (currentScene !== SCENE_2_HEAD) return;
   // Cooldown de 2.2 segundos para que el usuario pueda interactuar con el rostro 3D de Bukele
   if (performance.now() - scene2EnterTime < 2200) return;
 
   audio.init();
-  audio.playLetsGoChime();
+  audio.playStartChime();
 
-  currentScene = SCENE_3_GAMEPLAY;
-  scene.background = new THREE.Color(0x7dd3fc); // Fondo cielo diurno de pradera
+  currentScene = SCENE_3_FILESELECT;
   headBgMosaic.classList.add('hidden');
   scene2Overlay.classList.add('hidden');
+  scene3FileSelect.classList.remove('hidden');
+  n64HandCursor.classList.remove('hidden');
+
+  // Posicionar la mano N64 inicialmente sobre el Slot BUKELE A como en Mario 64
+  requestAnimationFrame(() => {
+    const firstSlot = document.querySelector('.file-card');
+    if (firstSlot && n64HandCursor) {
+      const rect = firstSlot.getBoundingClientRect();
+      n64HandCursor.style.left = (rect.left + 52) + 'px';
+      n64HandCursor.style.top = (rect.top + 28) + 'px';
+    }
+  });
+}
+
+// Transición: Escena 3 -> Escena 4 (Gameplay 3D)
+function goToScene4() {
+  if (currentScene !== SCENE_3_FILESELECT) return;
+
+  audio.init();
+  audio.playLetsGoChime();
+
+  currentScene = SCENE_4_GAMEPLAY;
+  scene.background = new THREE.Color(0x7dd3fc); // Fondo cielo diurno de pradera
+  scene3FileSelect.classList.add('hidden');
+  n64HandCursor.classList.add('hidden');
   hud.classList.remove('hidden');
   controlsHint.classList.remove('hidden');
 }
@@ -561,17 +589,38 @@ btnScene1Start.addEventListener('click', (e) => {
   goToScene2();
 });
 
-// En Escena 2, el botón Rainbow PRESS START inicia el juego
+// En Escena 2, el botón Rainbow PRESS START pasa a SELECT FILE
 btnScene2Start.addEventListener('click', (e) => {
   e.stopPropagation();
   goToScene3();
 });
+
+// En Escena 3, cualquier clic en la pantalla SELECT FILE avanza inmediatamente al juego
+if (scene3FileSelect) {
+  scene3FileSelect.addEventListener('click', () => {
+    goToScene4();
+  });
+}
+
 btnRestart.addEventListener('click', () => location.reload());
 
-// Soporte de navegación directa por parámetro URL (?scene=2)
+// Soporte de navegación directa por parámetro URL (?scene=2, ?scene=3 o ?scene=4)
 const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.get('scene') === '2') {
   setTimeout(() => goToScene2(), 100);
+} else if (urlParams.get('scene') === '3') {
+  setTimeout(() => {
+    goToScene2();
+    scene2EnterTime = 0;
+    setTimeout(() => goToScene3(), 50);
+  }, 100);
+} else if (urlParams.get('scene') === '4') {
+  setTimeout(() => {
+    goToScene2();
+    scene2EnterTime = 0;
+    goToScene3();
+    setTimeout(() => goToScene4(), 50);
+  }, 100);
 }
 
 /* ==========================================================================
@@ -608,6 +657,11 @@ window.addEventListener('keydown', (e) => {
     goToScene3();
     return;
   }
+  // En Escena 3, cualquier tecla Enter o Espacio avanza inmediatamente a Gameplay
+  if (currentScene === SCENE_3_FILESELECT && (e.code === 'Space' || e.code === 'Enter')) {
+    goToScene4();
+    return;
+  }
 
   if (e.code === 'KeyQ') cameraAngle += 0.08;
   if (e.code === 'KeyE') cameraAngle -= 0.08;
@@ -621,6 +675,12 @@ window.addEventListener('mousemove', (e) => {
   mouseNormalizedX = (e.clientX / window.innerWidth - 0.5) * 2;
   mouseNormalizedY = (e.clientY / window.innerHeight - 0.5) * 2;
 
+  // Seguimiento del cursor de mano 3D en Escena 3 (Pantalla SELECT FILE)
+  if (currentScene === SCENE_3_FILESELECT && n64HandCursor) {
+    n64HandCursor.style.left = e.clientX + 'px';
+    n64HandCursor.style.top = e.clientY + 'px';
+  }
+
   // Interacción de arrastre en Escena 2 estilo Mario 64
   if (isDragging && currentScene === SCENE_2_HEAD) {
     const deltaX = e.clientX - previousMouseX;
@@ -631,7 +691,7 @@ window.addEventListener('mousemove', (e) => {
     previousMouseY = e.clientY;
   }
 
-  if (isDragging && currentScene === SCENE_3_GAMEPLAY) {
+  if (isDragging && currentScene === SCENE_4_GAMEPLAY) {
     const deltaX = e.clientX - previousMouseX;
     cameraAngle -= deltaX * 0.005;
     previousMouseX = e.clientX;
@@ -648,6 +708,9 @@ window.addEventListener('mousedown', (e) => {
     // Solo avanzar de Escena 1 a Escena 2
     if (currentScene === SCENE_1_TITLE) {
       goToScene2();
+    } else if (currentScene === SCENE_3_FILESELECT) {
+      // Requisito del usuario: clic en cualquier lugar avanza al gameplay
+      goToScene4();
     }
   }
 });
@@ -669,7 +732,7 @@ const clock = new THREE.Clock();
 let walkCycle = 0;
 
 function updatePhysics(delta) {
-  if (currentScene !== SCENE_3_GAMEPLAY) return;
+  if (currentScene !== SCENE_4_GAMEPLAY) return;
 
   let moveX = 0;
   let moveZ = 0;
@@ -823,7 +886,12 @@ function updateCamera(delta) {
     return;
   }
 
-  // Escena 3: Cámara de Gameplay en 3ª persona
+  if (currentScene === SCENE_3_FILESELECT) {
+    // Escena 3: Pantalla SELECT FILE es 2D overlay; la cámara 3D se mantiene en reposo
+    return;
+  }
+
+  // Escena 4: Cámara de Gameplay en 3ª persona
   const cameraDistance = currentScene === SCENE_VICTORY ? 5.5 : 8.5;
   const cameraHeight = currentScene === SCENE_VICTORY ? 2.5 : 4.0;
 
@@ -842,7 +910,7 @@ function animate() {
   requestAnimationFrame(animate);
   const delta = Math.min(clock.getDelta(), 0.1);
 
-  if (currentScene >= SCENE_3_GAMEPLAY) {
+  if (currentScene >= SCENE_4_GAMEPLAY) {
     coins.forEach((coin) => {
       if (coin.userData.active) {
         coin.rotation.y += delta * 2.5;
@@ -868,18 +936,3 @@ function animate() {
 }
 
 animate();
-
-// Atajo de URL para depuración y verificación de escenas directas (?scene=2 o ?scene=3)
-if (window.location.search.includes('scene=2')) {
-  setTimeout(() => {
-    if (typeof goToScene2 === 'function') goToScene2();
-  }, 400);
-} else if (window.location.search.includes('scene=3')) {
-  setTimeout(() => {
-    if (typeof goToScene2 === 'function') {
-      goToScene2();
-      scene2EnterTime = 0; // Omitir cooldown para pruebas
-      setTimeout(() => { if (typeof goToScene3 === 'function') goToScene3(); }, 150);
-    }
-  }, 300);
-}
