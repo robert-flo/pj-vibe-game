@@ -87,29 +87,30 @@ def create_block_letter(char, mat_face, loc, size=1.0, extrude=0.6, bevel=0.035,
     return mesh_obj
 
 # -----------------------------------------------------------------------------
-# 2. DISPOSICIÓN EXACTA AUTÉNTICA SM64 (Letras gruesas, compactas, unificadas)
+# 2. DISPOSICIÓN EXACTA AUTÉNTICA SM64 (Sin solapamiento, 64 separado a la derecha)
 # -----------------------------------------------------------------------------
 
-# "SUPER" (Con la tipografía oficial Typeface Mario 64)
+# "SUPER" (Compacto y arqueado en el lado superior izquierdo/centro)
 # S(Rojo), U(Azul), P(Amarillo), E(Azul), R(Verde)
 super_letters = [
-    ('S', mat_red, -2.4, 1.5, 1.05, 14, -6),
-    ('U', mat_blue, -1.2, 1.5, 1.18, 12, -2),
-    ('P', mat_yellow, 0.0, 1.5, 1.22, 11, 0),
-    ('E', mat_blue, 1.2, 1.5, 1.18, 12, 2),
-    ('R', mat_green, 2.4, 1.5, 1.05, 14, 6),
+    ('S', mat_red, -2.7, 1.45, 1.05, 14, -6),
+    ('U', mat_blue, -1.4, 1.45, 1.18, 12, -2),
+    ('P', mat_yellow, -0.1, 1.45, 1.22, 11, 0),
+    ('E', mat_blue, 1.15, 1.45, 1.18, 12, 2),
+    ('R', mat_green, 2.35, 1.45, 1.05, 14, 6),
 ]
 
 for char, mat, x, sz, z, tx, tz in super_letters:
     create_block_letter(char, mat, (x, 0.05, z), size=sz, extrude=0.48, bevel=0.03, tilt_x=tx, tilt_z=tz)
 
-# "64" (Con la tipografía oficial Typeface Mario 64)
-bpy.ops.object.text_add(location=(3.95, -0.15, 1.1), rotation=(math.radians(76), 0, math.radians(-15)))
+# "64" (Separado claramente a la derecha de la 'R', flotando sobre el lateral de BUKELE)
+# R termina alrededor de x = 3.0. Colocamos el 64 a x = 4.4 para un espacio libre limpio.
+bpy.ops.object.text_add(location=(4.45, -0.15, 1.25), rotation=(math.radians(76), 0, math.radians(-14)))
 num64 = bpy.context.active_object
 num64.name = "Logo_64"
 num64.data.body = "64"
 num64.data.font = n64_font
-num64.data.size = 1.85
+num64.data.size = 1.75
 num64.data.extrude = 0.62
 num64.data.bevel_depth = 0.04
 num64.data.bevel_resolution = 2
@@ -125,28 +126,28 @@ for poly in num64.data.polygons:
     else:
         poly.material_index = 1
 
-# "TM"
-bpy.ops.object.text_add(location=(5.2, -0.25, 2.05), rotation=(math.radians(82), 0, 0))
+# "TM" (Encima del 64 a la derecha)
+bpy.ops.object.text_add(location=(5.65, -0.25, 2.15), rotation=(math.radians(82), 0, 0))
 tm = bpy.context.active_object
 tm.name = "Logo_TM"
 tm.data.body = "TM"
 tm.data.font = n64_font
-tm.data.size = 0.48
+tm.data.size = 0.45
 tm.data.extrude = 0.12
 tm.data.align_x = 'CENTER'
 tm.data.align_y = 'CENTER'
 bpy.ops.object.convert(target='MESH')
 tm.data.materials.append(mat_white)
 
-# "BUKELE" (Fila inferior dominante con la tipografía oficial Typeface Mario 64)
+# "BUKELE" (Fila inferior dominante)
 # B(Azul), U(Verde), K(Amarillo), E(Rojo), L(Verde), E(Azul)
 bukele_letters = [
-    ('B', mat_blue, -3.75, 2.35, -0.75, 14, -6),
-    ('U', mat_green, -2.25, 2.4, -0.65, 13, -3),
-    ('K', mat_yellow, -0.75, 2.45, -0.6, 12, 0),
-    ('E', mat_red, 0.75, 2.45, -0.6, 12, 1),
-    ('L', mat_green, 2.25, 2.4, -0.65, 13, 3),
-    ('E', mat_blue, 3.75, 2.35, -0.75, 14, 6),
+    ('B', mat_blue, -3.75, 2.35, -0.80, 14, -6),
+    ('U', mat_green, -2.25, 2.4, -0.70, 13, -3),
+    ('K', mat_yellow, -0.75, 2.45, -0.65, 12, 0),
+    ('E', mat_red, 0.75, 2.45, -0.65, 12, 1),
+    ('L', mat_green, 2.25, 2.4, -0.70, 13, 3),
+    ('E', mat_blue, 3.75, 2.35, -0.80, 14, 6),
 ]
 
 for char, mat, x, sz, z, tx, tz in bukele_letters:
@@ -155,8 +156,9 @@ for char, mat, x, sz, z, tx, tz in bukele_letters:
 # -----------------------------------------------------------------------------
 # 3. CÁMARA E ILUMINACIÓN DE ESTUDIO N64
 # -----------------------------------------------------------------------------
+# Cámara centrada en x = 0.5 para equilibrar la composición con el 64 a la derecha
 bpy.ops.object.camera_add(
-    location=(0.4, -16.2, 0.35),
+    location=(0.55, -17.2, 0.35),
     rotation=(math.radians(91), 0, 0)
 )
 cam = bpy.context.active_object
@@ -199,4 +201,4 @@ logo_png_path = os.path.join(output_dir, "super_bukele_64_logo.png")
 scene.render.filepath = logo_png_path
 
 bpy.ops.render.render(write_still=True)
-print(f"[OK] Render logo oficial Mario 64 finalizado: {logo_png_path}")
+print(f"[OK] Render logo oficial 64 separado finalizado: {logo_png_path}")
