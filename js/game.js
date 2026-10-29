@@ -285,12 +285,71 @@ function createBukeleCharacter() {
 
 const player = createBukeleCharacter();
 scene.add(player);
-player.position.set(0, 0, 10);
+player.position.set(0, 0, 8.8);
 
 /* ==========================================================================
-   5. ESCENARIO 3D (Pradera, Colina, Plataformas y Nubes)
+   5. ESCENARIO 3D (Pradera, Tubería N64 de Inicio, Colina y Plataformas)
    ========================================================================== */
 const colliders = [];
+
+// Tubería Verde N64 de Inicio (Donde el juego toma el relevo exacto de la cinemática)
+function createWarpPipe(x, z) {
+  const pipeGroup = new THREE.Group();
+
+  // Parche circular de tierra/arena bajo la tubería (fiel a la escena del segundo 49)
+  const dirtGeom = new THREE.CylinderGeometry(2.4, 2.7, 0.15, 32);
+  const dirtMat = new THREE.MeshLambertMaterial({ color: 0xe5c07b });
+  const dirt = new THREE.Mesh(dirtGeom, dirtMat);
+  dirt.position.y = 0.08;
+  dirt.receiveShadow = true;
+  pipeGroup.add(dirt);
+
+  const pipeMat = new THREE.MeshStandardMaterial({
+    color: 0x22c55e,
+    roughness: 0.35,
+    metalness: 0.15
+  });
+
+  // Base / Cuerpo de la tubería
+  const bodyGeom = new THREE.CylinderGeometry(1.25, 1.25, 1.8, 28);
+  const body = new THREE.Mesh(bodyGeom, pipeMat);
+  body.position.y = 0.9;
+  body.castShadow = true;
+  body.receiveShadow = true;
+  pipeGroup.add(body);
+
+  // Borde superior ensanchado de la tubería N64
+  const rimGeom = new THREE.CylinderGeometry(1.52, 1.52, 0.65, 28);
+  const rim = new THREE.Mesh(rimGeom, pipeMat);
+  rim.position.y = 1.85;
+  rim.castShadow = true;
+  rim.receiveShadow = true;
+  pipeGroup.add(rim);
+
+  // Interior hueco oscuro
+  const holeGeom = new THREE.CircleGeometry(1.22, 28);
+  const holeMat = new THREE.MeshBasicMaterial({ color: 0x052e16 });
+  const hole = new THREE.Mesh(holeGeom, holeMat);
+  hole.rotation.x = -Math.PI / 2;
+  hole.position.y = 2.18;
+  pipeGroup.add(hole);
+
+  pipeGroup.position.set(x, 0, z);
+  scene.add(pipeGroup);
+
+  colliders.push({
+    type: 'box',
+    minX: x - 1.5,
+    maxX: x + 1.5,
+    minZ: z - 1.5,
+    maxZ: z + 1.5,
+    topY: 2.18
+  });
+
+  return pipeGroup;
+}
+
+const startWarpPipe = createWarpPipe(0, 11.5);
 
 // Suelo Principal
 const groundGeom = new THREE.CylinderGeometry(45, 48, 4, 48);
@@ -551,10 +610,10 @@ function goToScene2() {
 }
 
 // Transición: Escena 2 -> Escena 3 (Pantalla SELECT FILE)
-function goToScene3() {
+function goToScene3(force = false) {
   if (currentScene !== SCENE_2_HEAD) return;
   // Cooldown de 2.2 segundos para que el usuario pueda interactuar con el rostro 3D de Bukele
-  if (performance.now() - scene2EnterTime < 2200) return;
+  if (!force && performance.now() - scene2EnterTime < 2200) return;
 
   audio.init();
   audio.playStartChime();
@@ -630,6 +689,11 @@ function goToSceneGameplay() {
   n64HandCursor.classList.add('hidden');
   hud.classList.remove('hidden');
   controlsHint.classList.remove('hidden');
+
+  // El relevo de la cinemática: Bukele aparece junto a la tubería verde N64
+  player.position.set(0, 0, 8.8);
+  player.rotation.y = 0;
+  cameraAngle = 0;
 }
 
 scene1Title.addEventListener('click', () => goToScene2());
@@ -686,29 +750,25 @@ if (requestedScene === '2') {
 } else if (requestedScene === '3') {
   setTimeout(() => {
     goToScene2();
-    scene2EnterTime = 0;
-    setTimeout(() => goToScene3(), 50);
+    setTimeout(() => goToScene3(true), 50);
   }, 100);
 } else if (requestedScene === 'letter' || requestedScene === '4') {
   setTimeout(() => {
     goToScene2();
-    scene2EnterTime = 0;
-    goToScene3();
+    goToScene3(true);
     setTimeout(() => goToSceneLetter(), 50);
   }, 100);
 } else if (requestedScene === 'cinematic' || requestedScene === '5') {
   setTimeout(() => {
     goToScene2();
-    scene2EnterTime = 0;
-    goToScene3();
+    goToScene3(true);
     goToSceneLetter();
     setTimeout(() => goToSceneCinematic(), 50);
   }, 100);
 } else if (requestedScene === 'gameplay' || requestedScene === '6') {
   setTimeout(() => {
     goToScene2();
-    scene2EnterTime = 0;
-    goToScene3();
+    goToScene3(true);
     goToSceneLetter();
     goToSceneCinematic();
     setTimeout(() => goToSceneGameplay(), 50);
@@ -913,7 +973,7 @@ function updatePhysics(delta) {
   }
 
   if (player.position.y < -15) {
-    player.position.set(0, 1, 10);
+    player.position.set(0, 1, 8.8);
     velocityY = 0;
   }
 
