@@ -514,8 +514,8 @@ function goToScene2() {
 // Transición: Escena 2 -> Escena 3 (Gameplay)
 function goToScene3() {
   if (currentScene !== SCENE_2_HEAD) return;
-  // Cooldown de 1.2 segundos para evitar saltarse la Escena 2 por clics accidentales
-  if (performance.now() - scene2EnterTime < 1200) return;
+  // Cooldown de 2.2 segundos para que el usuario pueda interactuar con el rostro 3D de Bukele
+  if (performance.now() - scene2EnterTime < 2200) return;
 
   audio.init();
   audio.playLetsGoChime();
@@ -534,12 +534,18 @@ btnScene1Start.addEventListener('click', (e) => {
   goToScene2();
 });
 
-// En Escena 2, solo el botón Rainbow PRESS START o la tecla Espacio avanzan a la Escena 3
+// En Escena 2, el botón Rainbow PRESS START inicia el juego
 btnScene2Start.addEventListener('click', (e) => {
   e.stopPropagation();
   goToScene3();
 });
 btnRestart.addEventListener('click', () => location.reload());
+
+// Soporte de navegación directa por parámetro URL (?scene=2)
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('scene') === '2') {
+  setTimeout(() => goToScene2(), 100);
+}
 
 /* ==========================================================================
    8. CONTROLES Y SEGUIMIENTO DEL CURSOR (HEAD TRACKING)
@@ -566,7 +572,8 @@ window.addEventListener('keydown', (e) => {
     goToScene2();
     return;
   }
-  if (currentScene === SCENE_2_HEAD && (e.code === 'Space' || e.code === 'Enter')) {
+  // En Escena 2, únicamente Enter (no Space) avanza si ya pasaron al menos 2.2s
+  if (currentScene === SCENE_2_HEAD && e.code === 'Enter' && !e.repeat) {
     goToScene3();
     return;
   }
