@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Super Bukele 64: Misión Rescate</title>
+  <link rel="stylesheet" href="css/style.css">
+  <!-- Three.js via CDN con Import Maps -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <!-- Canvas 3D -->
+  <div id="game-container"></div>
+
+  <!-- HUD Superior -->
+  <div id="hud">
+    <div class="hud-item coins-counter">
+      <span class="coin-icon">₿</span>
+      <span id="coin-count">0</span> / <span id="coin-total">5</span>
+    </div>
+    <div class="hud-item mission-badge">
+      <span class="mission-icon">⭐</span>
+      <span>Misión: Escala la colina y rescata a Gabriela</span>
+    </div>
+  </div>
+
+  <!-- Controles flotantes en pantalla / Instrucciones -->
+  <div id="controls-hint">
+    <p><strong>[WASD / Flechas]</strong> Moverse &nbsp;|&nbsp; <strong>[Espacio]</strong> Saltar &nbsp;|&nbsp; <strong>[Ratón / Q-E]</strong> Girar cámara</p>
+  </div>
+
+  <!-- Modal de Inicio -->
+  <div id="start-overlay" class="overlay active">
+    <div class="card">
+      <h1>⭐ Super Bukele 64 ⭐</h1>
+      <h3 class="subtitle">Misión: Rescate de la Princesa Gabriela</h3>
+      <p class="story">
+        ¡Bowser ha secuestrado a la Primera Dama Gabriela y la mantiene cautiva en la fortaleza!
+        Para romper el primer candado mágico, Nayib debe recolectar los <strong>Bitcoins</strong> dorados y alcanzar la <strong>Estrella de la Libertad</strong> en la cima de la colina.
+      </p>
+      <div class="controls-guide">
+        <div><strong>W, A, S, D</strong> o Flechas para moverte</div>
+        <div><strong>Barra Espaciadora</strong> para saltar</div>
+        <div><strong>Arrastrar Ratón o Q / E</strong> para rotar la cámara</div>
+      </div>
+      <button id="btn-start" class="btn primary-btn">🎮 Iniciar Misión</button>
+    </div>
+  </div>
+
+  <!-- Modal de Victoria -->
+  <div id="victory-modal" class="overlay">
+    <div class="card victory-card">
+      <div class="star-animation">⭐</div>
+      <h1>¡VICTORIA!</h1>
+      <h2>¡Has conseguido la Estrella!</h2>
+      <p id="victory-message">
+        ¡El primer sello de Bowser ha sido destruido! La Princesa Gabriela sabe que su rescate está cerca.
+      </p>
+      <div class="stats">
+        <p>Bitcoins asegurados: <strong><span id="final-coins">0</span>/5</strong></p>
+      </div>
+      <button id="btn-restart" class="btn primary-btn">🔄 Jugar de Nuevo</button>
+    </div>
+  </div>
+
+  <script type="module" src="js/game.js"></script>
+</body>
+</html>
