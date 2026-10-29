@@ -868,3 +868,18 @@ function animate() {
 }
 
 animate();
+
+// Atajo de URL para depuración y verificación de escenas directas (?scene=2 o ?scene=3)
+if (window.location.search.includes('scene=2')) {
+  setTimeout(() => {
+    if (typeof goToScene2 === 'function') goToScene2();
+  }, 400);
+} else if (window.location.search.includes('scene=3')) {
+  setTimeout(() => {
+    if (typeof goToScene2 === 'function') {
+      goToScene2();
+      scene2EnterTime = 0; // Omitir cooldown para pruebas
+      setTimeout(() => { if (typeof goToScene3 === 'function') goToScene3(); }, 150);
+    }
+  }, 300);
+}
