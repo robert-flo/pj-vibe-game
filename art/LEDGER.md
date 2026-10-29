@@ -3,7 +3,7 @@
 | Asset ID | Type | Source | Target Ref | Status | Notes |
 |---|---|---|---|---|---|
 | `hero_bukele` | 3D Character (GLB) | Blender Python Headless | `ref-02`, `ref-04` | final | Ceremonial coat, sash, collar & cuff embroidery, rig |
-| `hero_bukele_head` | 3D Character Bust (GLB) | Blender Python Headless | `ref-05`, `ref-07` | final | Authored 3D stylized polygonal bust (N64 caricature) with sculpted jaw, hair pompadour, beard/mustache volume, 3D eyes with glint, mandarin collar and presidential sash (380 KB, 6.6k polys) |
+| `hero_bukele_head` | 3D Character Bust (GLB) | Tripo3D AI + Blender Pipeline | `ref-05`, `ref-07` | final | High-fidelity 3D PBR bust of Nayib Bukele (Tripo AI model optimized and retargeted in Blender 5.2 LTS, 35k polys, PBR textures, 12 MB) |
 | `title_logo_super` | 3D Typographic Block | Procedural DOM/CSS 3D | `ref-01` | final | Multi-color isometric wooden blocks |
 | `title_logo_bukele` | 3D Typographic Block | Procedural DOM/CSS 3D | `ref-01` | final | Primary color blocks with wooden extrusion |
 | `title_logo_64` | 3D Numeric Block | Procedural DOM/CSS 3D | `ref-01` | final | Tilted 3D red/gold extrusion |
