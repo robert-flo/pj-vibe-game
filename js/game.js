@@ -20,11 +20,10 @@ class RetroAudio {
     }
   }
 
-  // Sonido de "Press Start" / Comienzo de partida estilo N64
+  // Sonido de inicio N64 (Escena 1 -> Escena 2)
   playStartChime() {
     if (!this.enabled || !this.ctx) return;
     const t = this.ctx.currentTime;
-    // Acorde alegre arpegiado (Do mayor brillante: C5, E5, G5, C6)
     const chord = [523.25, 659.25, 783.99, 1046.50];
     chord.forEach((freq, i) => {
       const osc = this.ctx.createOscillator();
@@ -43,6 +42,35 @@ class RetroAudio {
 
       osc.start(start);
       osc.stop(start + duration);
+    });
+  }
+
+  // Sonido icónico "It's-a me!" / Entrada al castillo (Escena 2 -> Escena 3)
+  playLetsGoChime() {
+    if (!this.enabled || !this.ctx) return;
+    const t = this.ctx.currentTime;
+    // Dos tonos rápidos y fanfare ascendente
+    const melody = [
+      { f: 659.25, d: 0.12, offset: 0 },
+      { f: 783.99, d: 0.12, offset: 0.12 },
+      { f: 1046.50, d: 0.30, offset: 0.24 }
+    ];
+    melody.forEach((note) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const start = t + note.offset;
+
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(note.f, start);
+
+      gain.gain.setValueAtTime(0.18, start);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + note.d);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(start);
+      osc.stop(start + note.d);
     });
   }
 
@@ -70,7 +98,6 @@ class RetroAudio {
     if (!this.enabled || !this.ctx) return;
     const t = this.ctx.currentTime;
     
-    // Tono 1 (B5)
     const osc1 = this.ctx.createOscillator();
     const gain1 = this.ctx.createGain();
     osc1.type = 'sine';
@@ -82,7 +109,6 @@ class RetroAudio {
     osc1.start(t);
     osc1.stop(t + 0.08);
 
-    // Tono 2 (E6)
     const osc2 = this.ctx.createOscillator();
     const gain2 = this.ctx.createGain();
     osc2.type = 'sine';
@@ -138,7 +164,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 container.appendChild(renderer.domElement);
 
-// Iluminación
+// Iluminación para Escena de Juego
 const hemiLight = new THREE.HemisphereLight(0xffffff, 0x44aa44, 0.7);
 hemiLight.position.set(0, 50, 0);
 scene.add(hemiLight);
@@ -148,169 +174,49 @@ dirLight.position.set(30, 60, 40);
 dirLight.castShadow = true;
 dirLight.shadow.mapSize.width = 2048;
 dirLight.shadow.mapSize.height = 2048;
-dirLight.shadow.camera.near = 10;
-dirLight.shadow.camera.far = 150;
-const d = 50;
-dirLight.shadow.camera.left = -d;
-dirLight.shadow.camera.right = d;
-dirLight.shadow.camera.top = d;
-dirLight.shadow.camera.bottom = -d;
 dirLight.shadow.bias = -0.0005;
 scene.add(dirLight);
 
 /* ==========================================================================
-   3. NAYIB BUKELE: MODELO 3D CEREMONIAL CON BANDA PRESIDENCIAL
+   3. ESCENA 2: CABEZA 3D GIGANTE DE BUKELO (MARIO 64 HEAD HOMAGE)
+   ========================================================================== */
+const headSceneGroup = new THREE.Group();
+headSceneGroup.position.set(0, 100, 0); // Ubicada en un espacio aislado de Three.js
+scene.add(headSceneGroup);
+
+// Iluminación de estudio estilo Mario 64 para la cabeza
+const headLightFront = new THREE.DirectionalLight(0xffffff, 1.8);
+headLightFront.position.set(0, 102, 6);
+scene.add(headLightFront);
+
+const headLightFill = new THREE.PointLight(0x93c5fd, 2.5, 20);
+headLightFill.position.set(-4, 101, 3);
+scene.add(headLightFill);
+
+let bukeleHeadMesh = null;
+const gltfLoader = new GLTFLoader();
+
+// Carga de bukele_head.glb desde Blender
+gltfLoader.load(
+  'assets/models/bukele_head.glb',
+  (gltf) => {
+    bukeleHeadMesh = gltf.scene;
+    bukeleHeadMesh.scale.set(1.4, 1.4, 1.4);
+    bukeleHeadMesh.position.set(0, 0, 0);
+    bukeleHeadMesh.rotation.y = Math.PI; // Mirando hacia la cámara
+    headSceneGroup.add(bukeleHeadMesh);
+    console.log('[GLTF] Cabeza oficial bukele_head.glb cargada.');
+  },
+  undefined,
+  (err) => console.warn('[GLTF Error] bukele_head.glb:', err)
+);
+
+/* ==========================================================================
+   4. NAYIB BUKELE: MODELO 3D DE CUERPO ENTERO PARA GAMEPLAY
    ========================================================================== */
 function createBukeleCharacter() {
   const group = new THREE.Group();
 
-  // Materiales
-  const ceremonialBlackMat = new THREE.MeshLambertMaterial({ color: 0x09090b }); // Traje ceremonial negro
-  const goldEmbroideryMat = new THREE.MeshStandardMaterial({
-    color: 0xfbbf24,
-    metalness: 0.8,
-    roughness: 0.3
-  }); // Bordado dorado
-  const skinMat = new THREE.MeshLambertMaterial({ color: 0xdfa86a }); // Tono de piel
-  const hairMat = new THREE.MeshLambertMaterial({ color: 0x171717 }); // Cabello y barba negros
-  const shoeMat = new THREE.MeshLambertMaterial({ color: 0x000000 }); // Zapatos de vestir negros
-  
-  // Materiales de la Banda Presidencial (Azul, Blanco, Azul)
-  const sashBlueMat = new THREE.MeshLambertMaterial({ color: 0x1d4ed8 });
-  const sashWhiteMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
-  const sashGoldSealMat = new THREE.MeshStandardMaterial({
-    color: 0xf59e0b,
-    metalness: 0.9,
-    roughness: 0.2
-  });
-
-  // Torso / Chaquetilla ceremonial negra
-  const torsoGeom = new THREE.BoxGeometry(0.8, 1.05, 0.52);
-  const torso = new THREE.Mesh(torsoGeom, ceremonialBlackMat);
-  torso.position.y = 1.32;
-  torso.castShadow = true;
-  group.add(torso);
-
-  // Cuello alto tipo mandarín con bordados dorados
-  const collarGeom = new THREE.BoxGeometry(0.48, 0.22, 0.48);
-  const collar = new THREE.Mesh(collarGeom, ceremonialBlackMat);
-  collar.position.set(0, 1.85, 0);
-  group.add(collar);
-
-  const collarGoldTrim = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.08, 0.5), goldEmbroideryMat);
-  collarGoldTrim.position.set(0, 1.9, 0);
-  group.add(collarGoldTrim);
-
-  // Banda Presidencial cruzada diagonalmente sobre el pecho
-  const sashGroup = new THREE.Group();
-  sashGroup.position.set(0, 1.32, 0);
-  sashGroup.rotation.z = -0.42; // Inclinación diagonal
-
-  const sashWidth = 0.24;
-  const sashHeight = 1.15;
-  const sashDepth = 0.54;
-
-  const sashBlue1 = new THREE.Mesh(new THREE.BoxGeometry(0.08, sashHeight, sashDepth), sashBlueMat);
-  sashBlue1.position.x = -0.08;
-  const sashWhite = new THREE.Mesh(new THREE.BoxGeometry(0.08, sashHeight, sashDepth), sashWhiteMat);
-  sashWhite.position.x = 0;
-  const sashBlue2 = new THREE.Mesh(new THREE.BoxGeometry(0.08, sashHeight, sashDepth), sashBlueMat);
-  sashBlue2.position.x = 0.08;
-
-  sashGroup.add(sashBlue1);
-  sashGroup.add(sashWhite);
-  sashGroup.add(sashBlue2);
-
-  // Escudo / Sello dorado central en la banda
-  const sealGeom = new THREE.CylinderGeometry(0.09, 0.09, 0.56, 16);
-  const seal = new THREE.Mesh(sealGeom, sashGoldSealMat);
-  seal.rotation.x = Math.PI / 2;
-  sashGroup.add(seal);
-
-  group.add(sashGroup);
-
-  // Cabeza
-  const headGeom = new THREE.BoxGeometry(0.54, 0.58, 0.54);
-  const head = new THREE.Mesh(headGeom, skinMat);
-  head.position.y = 2.18;
-  head.castShadow = true;
-  group.add(head);
-
-  // Cabello peinado hacia atrás
-  const hairTop = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.22, 0.56), hairMat);
-  hairTop.position.set(0, 2.48, -0.02);
-  hairTop.castShadow = true;
-  group.add(hairTop);
-
-  const hairBack = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.44, 0.16), hairMat);
-  hairBack.position.set(0, 2.22, -0.26);
-  group.add(hairBack);
-
-  // Barba y bigote delineados
-  const beardJaw = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.24, 0.36), hairMat);
-  beardJaw.position.set(0, 2.02, 0.12);
-  group.add(beardJaw);
-
-  const mustache = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.08, 0.12), hairMat);
-  mustache.position.set(0, 2.14, 0.28);
-  group.add(mustache);
-
-  // Ojos
-  const eyeMat = new THREE.MeshBasicMaterial({ color: 0x171717 });
-  const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.06, 0.05), eyeMat);
-  eyeL.position.set(-0.15, 2.26, 0.28);
-  const eyeR = eyeL.clone();
-  eyeR.position.x = 0.15;
-  group.add(eyeL);
-  group.add(eyeR);
-
-  // Piernas con pantalón ceremonial
-  const legGeom = new THREE.BoxGeometry(0.3, 0.72, 0.36);
-  const leftLeg = new THREE.Mesh(legGeom, ceremonialBlackMat);
-  leftLeg.position.set(-0.22, 0.6, 0);
-  leftLeg.castShadow = true;
-  group.add(leftLeg);
-
-  const rightLeg = new THREE.Mesh(legGeom, ceremonialBlackMat);
-  rightLeg.position.set(0.22, 0.6, 0);
-  rightLeg.castShadow = true;
-  group.add(rightLeg);
-
-  // Zapatos de gala negros
-  const shoeGeom = new THREE.BoxGeometry(0.32, 0.2, 0.46);
-  const leftShoe = new THREE.Mesh(shoeGeom, shoeMat);
-  leftShoe.position.set(-0.22, 0.1, 0.05);
-  leftShoe.castShadow = true;
-  group.add(leftShoe);
-
-  const rightShoe = new THREE.Mesh(shoeGeom, shoeMat);
-  rightShoe.position.set(0.22, 0.1, 0.05);
-  rightShoe.castShadow = true;
-  group.add(rightShoe);
-
-  // Brazos con puños bordados dorados
-  const armGeom = new THREE.BoxGeometry(0.22, 0.76, 0.26);
-  const leftArm = new THREE.Mesh(armGeom, ceremonialBlackMat);
-  leftArm.position.set(-0.52, 1.35, 0);
-  leftArm.castShadow = true;
-  
-  // Bordado dorado en el puño izquierdo
-  const cuffL = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.16, 0.28), goldEmbroideryMat);
-  cuffL.position.y = -0.28;
-  leftArm.add(cuffL);
-  group.add(leftArm);
-
-  const rightArm = new THREE.Mesh(armGeom, ceremonialBlackMat);
-  rightArm.position.set(0.52, 1.35, 0);
-  rightArm.castShadow = true;
-  
-  // Bordado dorado en el puño derecho
-  const cuffR = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.16, 0.28), goldEmbroideryMat);
-  cuffR.position.y = -0.28;
-  rightArm.add(cuffR);
-  group.add(rightArm);
-
-  // Sombra proyectada en el suelo
   const shadowGeom = new THREE.CircleGeometry(0.65, 24);
   const shadowMat = new THREE.MeshBasicMaterial({
     color: 0x000000,
@@ -324,18 +230,11 @@ function createBukeleCharacter() {
   scene.add(dropShadow);
 
   group.userData = {
-    leftArm,
-    rightArm,
-    leftLeg,
-    rightLeg,
-    leftShoe,
-    rightShoe,
     dropShadow,
     blenderModel: null
   };
 
-  // Carga del modelo oficial exportado desde Blender (bukele.glb)
-  const gltfLoader = new GLTFLoader();
+  // Carga de bukele.glb (modelo ceremonial completo de Blender)
   gltfLoader.load(
     'assets/models/bukele.glb',
     (gltf) => {
@@ -346,18 +245,12 @@ function createBukeleCharacter() {
           child.receiveShadow = true;
         }
       });
-      // Ocultar geometría temporal y activar la malla de Blender
-      group.children.forEach((c) => {
-        if (c !== dropShadow) c.visible = false;
-      });
       group.add(bukeleMesh);
       group.userData.blenderModel = bukeleMesh;
-      console.log('[GLTF] Modelo oficial bukele.glb activo.');
+      console.log('[GLTF] Modelo ceremonial bukele.glb activo.');
     },
     undefined,
-    (err) => {
-      console.warn('[GLTF Fallback] Manteniendo geometría base:', err);
-    }
+    (err) => console.warn('[GLTF Fallback] bukele.glb:', err)
   );
 
   return group;
@@ -368,11 +261,11 @@ scene.add(player);
 player.position.set(0, 0, 10);
 
 /* ==========================================================================
-   4. CONSTRUCCIÓN DEL ESCENARIO (Pradera, Colina y Plataformas)
+   5. ESCENARIO 3D (Pradera, Colina, Plataformas y Nubes)
    ========================================================================== */
 const colliders = [];
 
-// 1. Suelo Principal
+// Suelo Principal
 const groundGeom = new THREE.CylinderGeometry(45, 48, 4, 48);
 const groundMat = new THREE.MeshLambertMaterial({ color: 0x4ade80 });
 const ground = new THREE.Mesh(groundGeom, groundMat);
@@ -381,7 +274,7 @@ ground.receiveShadow = true;
 scene.add(ground);
 colliders.push({ type: 'ground', y: 0, radius: 45 });
 
-// 2. Colina Escalable
+// Colina
 function createHill() {
   const hillGroup = new THREE.Group();
   const hillMat = new THREE.MeshLambertMaterial({ color: 0x22c55e });
@@ -413,7 +306,7 @@ function createHill() {
 }
 createHill();
 
-// 3. Plataformas flotantes
+// Plataformas
 const platformMat = new THREE.MeshLambertMaterial({ color: 0xfbbf24 });
 const brickBorderMat = new THREE.MeshLambertMaterial({ color: 0xd97706 });
 
@@ -446,7 +339,7 @@ addPlatform(8, 3.8, -8, 3.5, 3.5);
 addPlatform(-8, 5.8, -12, 3.5, 3.5);
 addPlatform(0, 7.8, -14, 3.5, 3);
 
-// 4. Árboles
+// Árboles
 function addTree(x, z) {
   const tree = new THREE.Group();
   const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.5, 2.2, 8), new THREE.MeshLambertMaterial({ color: 0x78350f }));
@@ -476,7 +369,7 @@ addTree(17, -10);
 addTree(-20, 18);
 addTree(22, 16);
 
-// 5. Nubes
+// Nubes
 const clouds = [];
 function addCloud(x, y, z) {
   const cloud = new THREE.Group();
@@ -499,14 +392,13 @@ addCloud(-10, 24, 25);
 addCloud(15, 20, 30);
 
 /* ==========================================================================
-   5. COLECCIONABLES (Bitcoins y La Estrella)
+   6. COLECCIONABLES (Bitcoins y La Estrella)
    ========================================================================== */
 const coins = [];
 let collectedCoins = 0;
 
 function createBitcoin(x, y, z) {
   const coinGroup = new THREE.Group();
-
   const discGeom = new THREE.CylinderGeometry(0.75, 0.75, 0.15, 24);
   const discMat = new THREE.MeshStandardMaterial({
     color: 0xf59e0b,
@@ -537,7 +429,6 @@ createBitcoin(0, 9.2, -14);
 
 function createStar() {
   const starGroup = new THREE.Group();
-
   const shape = new THREE.Shape();
   const outerR = 1.2;
   const innerR = 0.5;
@@ -582,16 +473,21 @@ function createStar() {
 const star = createStar();
 
 /* ==========================================================================
-   6. GESTIÓN DE ESCENAS (ESCENA 1: TÍTULO -> ESCENA 2: GAMEPLAY)
+   7. MÁQUINA DE ESTADOS DE ESCENAS
    ========================================================================== */
-const STATE_TITLE = 0;
-const STATE_PLAYING = 1;
-const STATE_VICTORY = 2;
+const SCENE_1_TITLE = 1;
+const SCENE_2_HEAD = 2;
+const SCENE_3_GAMEPLAY = 3;
+const SCENE_VICTORY = 4;
 
-let currentState = STATE_TITLE;
+let currentScene = SCENE_1_TITLE;
 
-const titleScreen = document.getElementById('title-screen');
-const btnPressStart = document.getElementById('btn-press-start');
+const scene1Title = document.getElementById('scene-1-title');
+const btnScene1Start = document.getElementById('btn-scene-1-start');
+
+const scene2Head = document.getElementById('scene-2-head');
+const btnScene2Start = document.getElementById('btn-scene-2-start');
+
 const hud = document.getElementById('hud');
 const controlsHint = document.getElementById('controls-hint');
 const victoryModal = document.getElementById('victory-modal');
@@ -599,25 +495,38 @@ const btnRestart = document.getElementById('btn-restart');
 const coinCountEl = document.getElementById('coin-count');
 const finalCoinsEl = document.getElementById('final-coins');
 
-function startGameFromTitle() {
-  if (currentState !== STATE_TITLE) return;
-  
+// Transición: Escena 1 -> Escena 2 (Cabeza 3D)
+function goToScene2() {
+  if (currentScene !== SCENE_1_TITLE) return;
   audio.init();
   audio.playStartChime();
 
-  // Transición suave de salida de la pantalla de título
-  titleScreen.classList.remove('active');
+  scene1Title.classList.remove('active');
+  setTimeout(() => {
+    scene2Head.classList.remove('hidden');
+    currentScene = SCENE_2_HEAD;
+  }, 400);
+}
+
+// Transición: Escena 2 -> Escena 3 (Gameplay)
+function goToScene3() {
+  if (currentScene !== SCENE_2_HEAD) return;
+  audio.init();
+  audio.playLetsGoChime();
+
+  scene2Head.classList.add('hidden');
   hud.classList.remove('hidden');
   controlsHint.classList.remove('hidden');
 
-  currentState = STATE_PLAYING;
+  currentScene = SCENE_3_GAMEPLAY;
 }
 
-btnPressStart.addEventListener('click', startGameFromTitle);
+btnScene1Start.addEventListener('click', goToScene2);
+btnScene2Start.addEventListener('click', goToScene3);
 btnRestart.addEventListener('click', () => location.reload());
 
 /* ==========================================================================
-   7. CONTROLES Y FÍSICAS
+   8. CONTROLES Y SEGUIMIENTO DEL CURSOR (HEAD TRACKING)
    ========================================================================== */
 const keys = {};
 let isGrounded = false;
@@ -630,12 +539,19 @@ let cameraAngle = 0;
 let isDragging = false;
 let previousMouseX = 0;
 
+let mouseNormalizedX = 0;
+let mouseNormalizedY = 0;
+
 window.addEventListener('keydown', (e) => {
   keys[e.code] = true;
   audio.init();
 
-  if (currentState === STATE_TITLE && (e.code === 'Space' || e.code === 'Enter')) {
-    startGameFromTitle();
+  if (currentScene === SCENE_1_TITLE && (e.code === 'Space' || e.code === 'Enter')) {
+    goToScene2();
+    return;
+  }
+  if (currentScene === SCENE_2_HEAD && (e.code === 'Space' || e.code === 'Enter')) {
+    goToScene3();
     return;
   }
 
@@ -647,27 +563,33 @@ window.addEventListener('keyup', (e) => {
   keys[e.code] = false;
 });
 
+window.addEventListener('mousemove', (e) => {
+  mouseNormalizedX = (e.clientX / window.innerWidth - 0.5) * 2;
+  mouseNormalizedY = (e.clientY / window.innerHeight - 0.5) * 2;
+
+  if (isDragging && currentScene === SCENE_3_GAMEPLAY) {
+    const deltaX = e.clientX - previousMouseX;
+    cameraAngle -= deltaX * 0.005;
+    previousMouseX = e.clientX;
+  }
+});
+
 window.addEventListener('mousedown', (e) => {
   if (e.button === 0) {
     isDragging = true;
     previousMouseX = e.clientX;
     audio.init();
-    if (currentState === STATE_TITLE) {
-      startGameFromTitle();
+
+    if (currentScene === SCENE_1_TITLE) {
+      goToScene2();
+    } else if (currentScene === SCENE_2_HEAD) {
+      goToScene3();
     }
   }
 });
 
 window.addEventListener('mouseup', () => {
   isDragging = false;
-});
-
-window.addEventListener('mousemove', (e) => {
-  if (isDragging && currentState === STATE_PLAYING) {
-    const deltaX = e.clientX - previousMouseX;
-    cameraAngle -= deltaX * 0.005;
-    previousMouseX = e.clientX;
-  }
 });
 
 window.addEventListener('resize', () => {
@@ -677,15 +599,14 @@ window.addEventListener('resize', () => {
 });
 
 /* ==========================================================================
-   8. BUCLE PRINCIPAL DE JUEGO
+   9. BUCLE PRINCIPAL DE ANIMACIÓN Y FÍSICAS
    ========================================================================== */
 const clock = new THREE.Clock();
 let walkCycle = 0;
 
 function updatePhysics(delta) {
-  if (currentState !== STATE_PLAYING) return;
+  if (currentScene !== SCENE_3_GAMEPLAY) return;
 
-  // Movimiento
   let moveX = 0;
   let moveZ = 0;
 
@@ -707,24 +628,11 @@ function updatePhysics(delta) {
     player.rotation.y = THREE.MathUtils.lerp(player.rotation.y, targetRotation, 14 * delta);
 
     walkCycle += delta * 12;
-    const swing = Math.sin(walkCycle) * 0.6;
-    player.userData.leftArm.rotation.x = swing;
-    player.userData.rightArm.rotation.x = -swing;
-    player.userData.leftLeg.rotation.x = -swing * 0.8;
-    player.userData.rightLeg.rotation.x = swing * 0.8;
-    player.userData.leftShoe.rotation.x = -swing * 0.8;
-    player.userData.rightShoe.rotation.x = swing * 0.8;
-
     if (player.userData.blenderModel) {
       player.userData.blenderModel.position.y = Math.abs(Math.sin(walkCycle * 2)) * 0.12;
       player.userData.blenderModel.rotation.z = Math.sin(walkCycle) * 0.05;
     }
   } else {
-    player.userData.leftArm.rotation.x = THREE.MathUtils.lerp(player.userData.leftArm.rotation.x, 0, 10 * delta);
-    player.userData.rightArm.rotation.x = THREE.MathUtils.lerp(player.userData.rightArm.rotation.x, 0, 10 * delta);
-    player.userData.leftLeg.rotation.x = THREE.MathUtils.lerp(player.userData.leftLeg.rotation.x, 0, 10 * delta);
-    player.userData.rightLeg.rotation.x = THREE.MathUtils.lerp(player.userData.rightLeg.rotation.x, 0, 10 * delta);
-
     if (player.userData.blenderModel) {
       player.userData.blenderModel.position.y = THREE.MathUtils.lerp(player.userData.blenderModel.position.y, 0, 10 * delta);
       player.userData.blenderModel.rotation.z = THREE.MathUtils.lerp(player.userData.blenderModel.rotation.z, 0, 10 * delta);
@@ -806,14 +714,11 @@ function updatePhysics(delta) {
 }
 
 function triggerVictory() {
-  currentState = STATE_VICTORY;
+  currentScene = SCENE_VICTORY;
   star.userData.active = false;
   audio.playVictory();
 
   player.rotation.y = cameraAngle + Math.PI;
-  // Gesto de saludo solemne / celebración
-  player.userData.rightArm.rotation.x = -Math.PI * 0.85;
-
   finalCoinsEl.innerText = collectedCoins;
   setTimeout(() => {
     victoryModal.classList.add('active');
@@ -821,21 +726,32 @@ function triggerVictory() {
 }
 
 function updateCamera(delta) {
-  if (currentState === STATE_TITLE) {
-    // Cámara en pantalla de título: giro cinematográfico suave
-    cameraAngle += delta * 0.2;
-    const dist = 12.0;
-    camera.position.set(
-      player.position.x + Math.sin(cameraAngle) * dist,
-      player.position.y + 3.0,
-      player.position.z + Math.cos(cameraAngle) * dist
-    );
-    camera.lookAt(player.position.x, player.position.y + 1.6, player.position.z);
+  if (currentScene === SCENE_1_TITLE) {
+    // Escena 1: Vista general
+    camera.position.set(0, 3, 16);
+    camera.lookAt(0, 2, 0);
     return;
   }
 
-  const cameraDistance = currentState === STATE_VICTORY ? 5.5 : 8.5;
-  const cameraHeight = currentState === STATE_VICTORY ? 2.5 : 4.0;
+  if (currentScene === SCENE_2_HEAD) {
+    // Escena 2: Enfocando la cabeza gigante 3D aislada
+    camera.position.set(0, 100, 4.2);
+    camera.lookAt(0, 100, 0);
+
+    // Animación interactiva: la cabeza de Bukele sigue al ratón
+    if (bukeleHeadMesh) {
+      const targetRotY = Math.PI + mouseNormalizedX * 0.65;
+      const targetRotX = mouseNormalizedY * 0.45;
+      bukeleHeadMesh.rotation.y = THREE.MathUtils.lerp(bukeleHeadMesh.rotation.y, targetRotY, 8 * delta);
+      bukeleHeadMesh.rotation.x = THREE.MathUtils.lerp(bukeleHeadMesh.rotation.x, targetRotX, 8 * delta);
+      bukeleHeadMesh.position.y = Math.sin(clock.elapsedTime * 2) * 0.08;
+    }
+    return;
+  }
+
+  // Escena 3: Cámara de Gameplay en 3ª persona
+  const cameraDistance = currentScene === SCENE_VICTORY ? 5.5 : 8.5;
+  const cameraHeight = currentScene === SCENE_VICTORY ? 2.5 : 4.0;
 
   const targetX = player.position.x + Math.sin(cameraAngle) * cameraDistance;
   const targetZ = player.position.z + Math.cos(cameraAngle) * cameraDistance;
@@ -852,22 +768,24 @@ function animate() {
   requestAnimationFrame(animate);
   const delta = Math.min(clock.getDelta(), 0.1);
 
-  coins.forEach((coin) => {
-    if (coin.userData.active) {
-      coin.rotation.y += delta * 2.5;
-      coin.position.y = coin.userData.baseY + Math.sin(clock.elapsedTime * 3) * 0.15;
+  if (currentScene >= SCENE_3_GAMEPLAY) {
+    coins.forEach((coin) => {
+      if (coin.userData.active) {
+        coin.rotation.y += delta * 2.5;
+        coin.position.y = coin.userData.baseY + Math.sin(clock.elapsedTime * 3) * 0.15;
+      }
+    });
+
+    if (star.userData.active) {
+      star.rotation.y += delta * 2.0;
+      star.position.y = star.userData.baseY + Math.sin(clock.elapsedTime * 2.5) * 0.25;
     }
-  });
 
-  if (star.userData.active) {
-    star.rotation.y += delta * 2.0;
-    star.position.y = star.userData.baseY + Math.sin(clock.elapsedTime * 2.5) * 0.25;
+    clouds.forEach((cloud, i) => {
+      cloud.position.x += delta * (0.8 + i * 0.2);
+      if (cloud.position.x > 50) cloud.position.x = -50;
+    });
   }
-
-  clouds.forEach((cloud, i) => {
-    cloud.position.x += delta * (0.8 + i * 0.2);
-    if (cloud.position.x > 50) cloud.position.x = -50;
-  });
 
   updatePhysics(delta);
   updateCamera(delta);

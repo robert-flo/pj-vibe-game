@@ -22,7 +22,7 @@
   <!-- ==========================================
        ESCENA 1: PANTALLA DE TÍTULO (HOMENAJE N64)
        ========================================== -->
-  <div id="title-screen" class="title-scene active">
+  <div id="scene-1-title" class="title-scene active">
     <div class="title-wrapper">
       <div class="logo-container">
         <!-- Fila SUPER -->
@@ -57,15 +57,45 @@
       </div>
 
       <!-- Botón / Indicador Pulsante PRESS START -->
-      <div id="btn-press-start" class="press-start-container">
+      <div id="btn-scene-1-start" class="press-start-container">
         <span class="press-start-text">PRESS START</span>
-        <span class="press-start-sub">HAZ CLICK O PULSA ESPACIO PARA COMENZAR</span>
+        <span class="press-start-sub">HAZ CLICK O PULSA ESPACIO PARA CONTINUAR</span>
       </div>
     </div>
   </div>
 
   <!-- ==========================================
-       ESCENA 2: HUD DURANTE EL JUEGO
+       ESCENA 2: PANTALLA DE LA CARA 3D (MARIO 64 HEAD)
+       ========================================== -->
+  <div id="scene-2-head" class="head-scene hidden">
+    <!-- Fondo azul con mosaico N64 -->
+    <div class="head-bg-mosaic"></div>
+
+    <!-- Texto Rainbow PRESS START (Inferior Izquierda) -->
+    <div id="btn-scene-2-start" class="rainbow-press-start">
+      <div class="rainbow-row">
+        <span class="rainbow-char c-yellow">P</span>
+        <span class="rainbow-char c-cyan">R</span>
+        <span class="rainbow-char c-green">E</span>
+        <span class="rainbow-char c-red">S</span>
+        <span class="rainbow-char c-pink">S</span>
+      </div>
+      <div class="rainbow-row">
+        <span class="rainbow-char c-cyan">S</span>
+        <span class="rainbow-char c-yellow">T</span>
+        <span class="rainbow-char c-orange">A</span>
+        <span class="rainbow-char c-red">R</span>
+        <span class="rainbow-char c-blue">T</span>
+      </div>
+    </div>
+
+    <div class="scene-2-hint">
+      Mueve el ratón para rotar la cabeza &bull; Haz click para entrar al castillo
+    </div>
+  </div>
+
+  <!-- ==========================================
+       ESCENA 3: HUD DURANTE EL JUEGO
        ========================================== -->
   <div id="hud" class="hidden">
     <div class="hud-item coins-counter">

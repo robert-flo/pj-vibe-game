@@ -51,7 +51,6 @@ body, html {
   text-align: center;
 }
 
-/* Contenedor del Logo 3D */
 .logo-container {
   display: flex;
   flex-direction: column;
@@ -69,19 +68,16 @@ body, html {
   gap: 6px;
 }
 
-/* Fila SUPER */
 .row-super .letter {
   font-size: 68px;
   padding: 0 4px;
 }
 
-/* Fila BUKELE + 64 */
 .row-bukele .letter {
   font-size: 88px;
   padding: 0 5px;
 }
 
-/* Estilo de Bloque 3D Extruido de Madera (Auténtico N64) */
 .letter {
   display: inline-block;
   font-weight: 900;
@@ -89,7 +85,6 @@ body, html {
   position: relative;
   transform: skew(-4deg);
   text-transform: uppercase;
-  /* Extrusión 3D biselada tipo madera de Mario 64 */
   text-shadow:
     0 1px 0 #d9a066,
     0 2px 0 #c68a4c,
@@ -104,7 +99,6 @@ body, html {
   filter: drop-shadow(0 15px 12px rgba(0, 0, 0, 0.8));
 }
 
-/* Colores de Cara Frontal con Bisel Superior */
 .block-red {
   color: #ef233c;
   background: linear-gradient(180deg, #ff5964 0%, #d90429 100%);
@@ -137,7 +131,6 @@ body, html {
   -webkit-text-stroke: 1.5px #f0fdf4;
 }
 
-/* Bloque 64 3D con perspectiva y bisel dorado */
 .logo-64 {
   position: relative;
   display: inline-flex;
@@ -153,7 +146,7 @@ body, html {
   background: linear-gradient(180deg, #ff4d4d 0%, #b91c1c 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  -webkit-text-stroke: 3px #fef08a; /* Borde amarillo icónico */
+  -webkit-text-stroke: 3px #fef08a;
   text-shadow:
     0 1px 0 #b45309,
     0 2px 0 #92400e,
@@ -174,9 +167,6 @@ body, html {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
-/* ==========================================================================
-   COPYRIGHT N64 (©2026 Kodigo Academy)
-   ========================================================================== */
 .copyright-n64 {
   font-family: "Courier New", Courier, monospace;
   font-size: 26px;
@@ -193,7 +183,6 @@ body, html {
   filter: drop-shadow(0 2px 8px rgba(56, 189, 248, 0.4));
 }
 
-/* Indicador Pulsante PRESS START */
 .press-start-container {
   cursor: pointer;
   display: flex;
@@ -228,13 +217,128 @@ body, html {
   letter-spacing: 1px;
 }
 
+/* ==========================================================================
+   ESCENA 2: PANTALLA DE LA CARA 3D (MARIO 64 HEAD HOMAGE)
+   ========================================================================== */
+.head-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 500;
+  pointer-events: auto;
+  opacity: 1;
+  transition: opacity 0.8s ease;
+}
+
+.head-scene.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Fondo Mosaico Azul con texto en relieve "SUPER BUKELE 64" */
+.head-bg-mosaic {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background-color: #0b1442;
+  background-image: 
+    radial-gradient(circle at 50% 50%, rgba(20, 40, 120, 0.6) 0%, rgba(5, 10, 35, 0.95) 100%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 140px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 180px);
+  pointer-events: none;
+}
+
+/* Texto decorativo repetido en el fondo */
+.head-bg-mosaic::before {
+  content: "SUPER BUKELE 64  SUPER BUKELE 64  SUPER BUKELE 64\A SUPER BUKELE 64  SUPER BUKELE 64  SUPER BUKELE 64\A SUPER BUKELE 64  SUPER BUKELE 64  SUPER BUKELE 64\A SUPER BUKELE 64  SUPER BUKELE 64  SUPER BUKELE 64\A SUPER BUKELE 64  SUPER BUKELE 64  SUPER BUKELE 64";
+  white-space: pre-wrap;
+  position: absolute;
+  inset: -100px;
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 120px;
+  letter-spacing: 12px;
+  color: #122268;
+  text-shadow: 2px 2px 0px rgba(40, 75, 190, 0.4), -1px -1px 0px rgba(0, 0, 0, 0.8);
+  opacity: 0.7;
+  overflow: hidden;
+  transform: rotate(-6deg) scale(1.1);
+}
+
+/* Rainbow PRESS START en la esquina inferior izquierda */
+.rainbow-press-start {
+  position: absolute;
+  bottom: 40px;
+  left: 45px;
+  z-index: 10;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  animation: pulseRainbow 1.2s infinite ease-in-out;
+  padding: 12px 18px;
+  border-radius: 12px;
+  background: rgba(5, 10, 35, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+  transition: transform 0.2s;
+}
+
+.rainbow-press-start:hover {
+  transform: scale(1.08);
+}
+
+.rainbow-row {
+  display: flex;
+  gap: 3px;
+}
+
+.rainbow-char {
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-shadow:
+    0 1px 0 #000,
+    0 2px 0 #000,
+    0 3px 0 #000,
+    0 5px 8px rgba(0, 0, 0, 0.8);
+}
+
+.c-yellow { color: #facc15; }
+.c-cyan   { color: #06b6d4; }
+.c-green  { color: #22c55e; }
+.c-red    { color: #ef4444; }
+.c-pink   { color: #ec4899; }
+.c-orange { color: #f97316; }
+.c-blue   { color: #3b82f6; }
+
+.scene-2-hint {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #93c5fd;
+  font-size: 13px;
+  font-weight: 600;
+  z-index: 10;
+  pointer-events: none;
+  background: rgba(11, 20, 66, 0.8);
+  padding: 6px 16px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+}
+
+@keyframes pulseRainbow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.65; transform: scale(0.97); }
+}
+
 @keyframes pulseBlink {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.45; transform: scale(0.98); }
 }
 
 /* ==========================================================================
-   ESCENA 2: HUD DURANTE EL JUEGO
+   ESCENA 3: HUD DURANTE EL JUEGO
    ========================================================================== */
 #hud {
   position: absolute;
@@ -290,7 +394,6 @@ body, html {
   font-size: 20px;
 }
 
-/* Indicador de Controles */
 #controls-hint {
   position: absolute;
   bottom: 16px;
@@ -309,9 +412,7 @@ body, html {
   transition: opacity 0.5s ease;
 }
 
-/* ==========================================================================
-   MODAL DE VICTORIA
-   ========================================================================== */
+/* Modales */
 .overlay {
   position: absolute;
   inset: 0;
@@ -413,10 +514,11 @@ body, html {
   box-shadow: 0 8px 20px rgba(37, 99, 235, 0.5);
 }
 
-/* Responsivo para móviles */
 @media (max-width: 640px) {
   .row-super .letter { font-size: 42px; }
   .row-bukele .letter { font-size: 52px; }
   .num64 { font-size: 56px; }
   .copyright-n64 { font-size: 18px; }
+  .rainbow-char { font-size: 24px; }
+  .rainbow-press-start { bottom: 20px; left: 20px; }
 }
