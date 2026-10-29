@@ -5,9 +5,9 @@ import os
 bpy.ops.wm.read_factory_settings(use_empty=True)
 
 # -----------------------------------------------------------------------------
-# 1. FUENTE Y MATERIALES N64
+# 1. FUENTE OFICIAL MARIO 64 Y MATERIALES
 # -----------------------------------------------------------------------------
-font_path = "/usr/share/fonts/noto/NotoSans-Black.ttf"
+font_path = "/home/omarchy/Projects/pj-vibe-game/assets/fonts/TypefaceMario64.otf"
 n64_font = bpy.data.fonts.load(font_path)
 
 # Material de Madera Pino Clásica N64 con vetas de corte de madera
@@ -57,7 +57,7 @@ mat_green = make_face_mat("N64Green", "#059639")
 mat_gold = make_face_mat("N64Gold", "#fde047")
 mat_white = make_face_mat("N64White", "#f8fafc")
 
-def create_block_letter(char, mat_face, loc, size=1.0, extrude=0.6, bevel=0.045, tilt_x=12, tilt_z=0):
+def create_block_letter(char, mat_face, loc, size=1.0, extrude=0.6, bevel=0.035, tilt_x=12, tilt_z=0):
     rot = (math.radians(90 - tilt_x), 0, math.radians(tilt_z))
     bpy.ops.object.text_add(location=loc, rotation=rot)
     t = bpy.context.active_object
@@ -67,7 +67,7 @@ def create_block_letter(char, mat_face, loc, size=1.0, extrude=0.6, bevel=0.045,
     t.data.size = size
     t.data.extrude = extrude
     t.data.bevel_depth = bevel
-    t.data.bevel_resolution = 3
+    t.data.bevel_resolution = 2
     t.data.align_x = 'CENTER'
     t.data.align_y = 'CENTER'
     
@@ -90,28 +90,29 @@ def create_block_letter(char, mat_face, loc, size=1.0, extrude=0.6, bevel=0.045,
 # 2. DISPOSICIÓN EXACTA AUTÉNTICA SM64 (Letras gruesas, compactas, unificadas)
 # -----------------------------------------------------------------------------
 
-# "SUPER" (Arqueado, montado sobre la fila inferior)
+# "SUPER" (Con la tipografía oficial Typeface Mario 64)
+# S(Rojo), U(Azul), P(Amarillo), E(Azul), R(Verde)
 super_letters = [
-    ('S', mat_red, -2.15, 1.6, 1.05, 14, -6),
-    ('U', mat_blue, -1.05, 1.62, 1.18, 12, -2),
-    ('P', mat_yellow, 0.0, 1.65, 1.22, 11, 0),
-    ('E', mat_blue, 1.05, 1.62, 1.18, 12, 2),
-    ('R', mat_green, 2.15, 1.6, 1.05, 14, 6),
+    ('S', mat_red, -2.4, 1.5, 1.05, 14, -6),
+    ('U', mat_blue, -1.2, 1.5, 1.18, 12, -2),
+    ('P', mat_yellow, 0.0, 1.5, 1.22, 11, 0),
+    ('E', mat_blue, 1.2, 1.5, 1.18, 12, 2),
+    ('R', mat_green, 2.4, 1.5, 1.05, 14, 6),
 ]
 
 for char, mat, x, sz, z, tx, tz in super_letters:
-    create_block_letter(char, mat, (x, 0.05, z), size=sz, extrude=0.48, bevel=0.038, tilt_x=tx, tilt_z=tz)
+    create_block_letter(char, mat, (x, 0.05, z), size=sz, extrude=0.48, bevel=0.03, tilt_x=tx, tilt_z=tz)
 
-# "64" (Grueso e inclinado hacia la derecha)
-bpy.ops.object.text_add(location=(3.65, -0.15, 1.1), rotation=(math.radians(76), 0, math.radians(-15)))
+# "64" (Con la tipografía oficial Typeface Mario 64)
+bpy.ops.object.text_add(location=(3.95, -0.15, 1.1), rotation=(math.radians(76), 0, math.radians(-15)))
 num64 = bpy.context.active_object
 num64.name = "Logo_64"
 num64.data.body = "64"
 num64.data.font = n64_font
-num64.data.size = 1.95
+num64.data.size = 1.85
 num64.data.extrude = 0.62
-num64.data.bevel_depth = 0.055
-num64.data.bevel_resolution = 3
+num64.data.bevel_depth = 0.04
+num64.data.bevel_resolution = 2
 num64.data.align_x = 'CENTER'
 num64.data.align_y = 'CENTER'
 bpy.ops.object.convert(target='MESH')
@@ -125,7 +126,7 @@ for poly in num64.data.polygons:
         poly.material_index = 1
 
 # "TM"
-bpy.ops.object.text_add(location=(4.85, -0.25, 1.95), rotation=(math.radians(82), 0, 0))
+bpy.ops.object.text_add(location=(5.2, -0.25, 2.05), rotation=(math.radians(82), 0, 0))
 tm = bpy.context.active_object
 tm.name = "Logo_TM"
 tm.data.body = "TM"
@@ -137,24 +138,25 @@ tm.data.align_y = 'CENTER'
 bpy.ops.object.convert(target='MESH')
 tm.data.materials.append(mat_white)
 
-# "BUKELE" (Fila inferior dominante con bloques de madera prominentes)
+# "BUKELE" (Fila inferior dominante con la tipografía oficial Typeface Mario 64)
+# B(Azul), U(Verde), K(Amarillo), E(Rojo), L(Verde), E(Azul)
 bukele_letters = [
-    ('B', mat_blue, -3.3, 2.45, -0.75, 14, -6),
-    ('U', mat_green, -2.0, 2.5, -0.65, 13, -3),
-    ('K', mat_yellow, -0.65, 2.55, -0.6, 12, 0),
-    ('E', mat_red, 0.65, 2.55, -0.6, 12, 1),
-    ('L', mat_green, 1.95, 2.5, -0.65, 13, 3),
-    ('E', mat_blue, 3.25, 2.45, -0.75, 14, 6),
+    ('B', mat_blue, -3.75, 2.35, -0.75, 14, -6),
+    ('U', mat_green, -2.25, 2.4, -0.65, 13, -3),
+    ('K', mat_yellow, -0.75, 2.45, -0.6, 12, 0),
+    ('E', mat_red, 0.75, 2.45, -0.6, 12, 1),
+    ('L', mat_green, 2.25, 2.4, -0.65, 13, 3),
+    ('E', mat_blue, 3.75, 2.35, -0.75, 14, 6),
 ]
 
 for char, mat, x, sz, z, tx, tz in bukele_letters:
-    create_block_letter(char, mat, (x, -0.15, z), size=sz, extrude=0.72, bevel=0.05, tilt_x=tx, tilt_z=tz)
+    create_block_letter(char, mat, (x, -0.15, z), size=sz, extrude=0.72, bevel=0.04, tilt_x=tx, tilt_z=tz)
 
 # -----------------------------------------------------------------------------
 # 3. CÁMARA E ILUMINACIÓN DE ESTUDIO N64
 # -----------------------------------------------------------------------------
 bpy.ops.object.camera_add(
-    location=(0.4, -15.2, 0.35),
+    location=(0.4, -16.2, 0.35),
     rotation=(math.radians(91), 0, 0)
 )
 cam = bpy.context.active_object
@@ -162,24 +164,20 @@ cam.data.lens = 52
 bpy.context.scene.camera = cam
 
 # Luces
-# Luz solar direccional desde arriba a la izquierda
 bpy.ops.object.light_add(type='SUN', location=(-8, -12, 12), rotation=(math.radians(45), math.radians(-32), 0))
 sun = bpy.context.active_object
 sun.data.energy = 4.4
 
-# Luz frontal cálida de relleno
 bpy.ops.object.light_add(type='POINT', location=(4, -8, 2))
 fill = bpy.context.active_object
 fill.data.energy = 280.0
 fill.data.color = (1.0, 0.96, 0.90)
 
-# Luz inferior para hacer relucir los bloques de madera
 bpy.ops.object.light_add(type='POINT', location=(0, -6, -3.5))
 bottom_light = bpy.context.active_object
 bottom_light.data.energy = 220.0
 bottom_light.data.color = (1.0, 0.88, 0.72)
 
-# World background suave
 world = bpy.data.worlds.new("World")
 bpy.context.scene.world = world
 world.use_nodes = True
@@ -188,10 +186,10 @@ if bg:
     bg.inputs['Color'].default_value = (0.28, 0.28, 0.28, 1.0)
     bg.inputs['Strength'].default_value = 0.9
 
-# Configuración de Render
+# Configuración de Render RGBA
 scene = bpy.context.scene
-scene.render.resolution_x = 1600
-scene.render.resolution_y = 750
+scene.render.resolution_x = 1800
+scene.render.resolution_y = 800
 scene.render.film_transparent = True
 scene.render.image_settings.color_mode = 'RGBA'
 
@@ -201,4 +199,4 @@ logo_png_path = os.path.join(output_dir, "super_bukele_64_logo.png")
 scene.render.filepath = logo_png_path
 
 bpy.ops.render.render(write_still=True)
-print(f"[OK] Render logo v5 finalizado: {logo_png_path}")
+print(f"[OK] Render logo oficial Mario 64 finalizado: {logo_png_path}")
