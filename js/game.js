@@ -184,28 +184,32 @@ const headSceneGroup = new THREE.Group();
 headSceneGroup.position.set(0, 100, 0); // Ubicada en un espacio aislado de Three.js
 scene.add(headSceneGroup);
 
+// Pivote dinámico para rotación natural de la cabeza con el ratón
+const headPivot = new THREE.Group();
+headSceneGroup.add(headPivot);
+
 // Iluminación de estudio estilo Mario 64 para la cabeza
-const headLightFront = new THREE.DirectionalLight(0xffffff, 1.8);
+const headLightFront = new THREE.DirectionalLight(0xffffff, 2.2);
 headLightFront.position.set(0, 102, 6);
 scene.add(headLightFront);
 
-const headLightFill = new THREE.PointLight(0x93c5fd, 2.5, 20);
+const headLightFill = new THREE.PointLight(0x93c5fd, 3.0, 20);
 headLightFill.position.set(-4, 101, 3);
 scene.add(headLightFill);
 
 let bukeleHeadMesh = null;
 const gltfLoader = new GLTFLoader();
 
-// Carga de bukele_head.glb desde Blender
+// Carga de bukele_head.glb (Modelo fotorrealista Tripo optimizado)
 gltfLoader.load(
   'assets/models/bukele_head.glb',
   (gltf) => {
     bukeleHeadMesh = gltf.scene;
-    bukeleHeadMesh.scale.set(1.4, 1.4, 1.4);
-    bukeleHeadMesh.position.set(0, 0, 0);
-    bukeleHeadMesh.rotation.y = Math.PI; // Mirando hacia la cámara
-    headSceneGroup.add(bukeleHeadMesh);
-    console.log('[GLTF] Cabeza oficial bukele_head.glb cargada.');
+    bukeleHeadMesh.scale.set(1.45, 1.45, 1.45);
+    bukeleHeadMesh.position.set(0, -0.2, 0);
+    bukeleHeadMesh.rotation.y = -Math.PI / 2; // Orientar exactamente de frente a la cámara
+    headPivot.add(bukeleHeadMesh);
+    console.log('[GLTF] Cabeza oficial bukele_head.glb cargada y orientada de frente.');
   },
   undefined,
   (err) => console.warn('[GLTF Error] bukele_head.glb:', err)
@@ -560,9 +564,13 @@ const SPEED = 9.0;
 let cameraAngle = 0;
 let isDragging = false;
 let previousMouseX = 0;
+let previousMouseY = 0;
 
 let mouseNormalizedX = 0;
 let mouseNormalizedY = 0;
+
+let headDragYaw = 0;
+let headDragPitch = 0;
 
 window.addEventListener('keydown', (e) => {
   keys[e.code] = true;
@@ -590,6 +598,16 @@ window.addEventListener('mousemove', (e) => {
   mouseNormalizedX = (e.clientX / window.innerWidth - 0.5) * 2;
   mouseNormalizedY = (e.clientY / window.innerHeight - 0.5) * 2;
 
+  // Interacción de arrastre en Escena 2 estilo Mario 64
+  if (isDragging && currentScene === SCENE_2_HEAD) {
+    const deltaX = e.clientX - previousMouseX;
+    const deltaY = e.clientY - previousMouseY;
+    headDragYaw += deltaX * 0.006;
+    headDragPitch += deltaY * 0.006;
+    previousMouseX = e.clientX;
+    previousMouseY = e.clientY;
+  }
+
   if (isDragging && currentScene === SCENE_3_GAMEPLAY) {
     const deltaX = e.clientX - previousMouseX;
     cameraAngle -= deltaX * 0.005;
@@ -601,6 +619,7 @@ window.addEventListener('mousedown', (e) => {
   if (e.button === 0) {
     isDragging = true;
     previousMouseX = e.clientX;
+    previousMouseY = e.clientY;
     audio.init();
 
     // Solo avanzar de Escena 1 a Escena 2
@@ -757,16 +776,26 @@ function updateCamera(delta) {
 
   if (currentScene === SCENE_2_HEAD) {
     // Escena 2: Enfocando la cabeza gigante 3D aislada
-    camera.position.set(0, 100, 4.2);
+    camera.position.set(0, 100, 3.8);
     camera.lookAt(0, 100, 0);
 
-    // Animación interactiva: la cabeza de Bukele sigue al ratón
-    if (bukeleHeadMesh) {
-      const targetRotY = Math.PI + mouseNormalizedX * 0.65;
-      const targetRotX = mouseNormalizedY * 0.45;
-      bukeleHeadMesh.rotation.y = THREE.MathUtils.lerp(bukeleHeadMesh.rotation.y, targetRotY, 8 * delta);
-      bukeleHeadMesh.rotation.x = THREE.MathUtils.lerp(bukeleHeadMesh.rotation.x, targetRotX, 8 * delta);
-      bukeleHeadMesh.position.y = Math.sin(clock.elapsedTime * 2) * 0.08;
+    // Animación interactiva: rotación natural y fluida con seguimiento de ratón
+    if (headPivot && bukeleHeadMesh) {
+      // Retorno elástico al soltar el clic
+      if (!isDragging) {
+        headDragYaw = THREE.MathUtils.lerp(headDragYaw, 0, 8 * delta);
+        headDragPitch = THREE.MathUtils.lerp(headDragPitch, 0, 8 * delta);
+      }
+
+      const targetRotY = mouseNormalizedX * 0.85 + headDragYaw;
+      const targetRotX = mouseNormalizedY * 0.45 + headDragPitch;
+      const targetRotZ = -mouseNormalizedX * 0.12;
+
+      headPivot.rotation.y = THREE.MathUtils.lerp(headPivot.rotation.y, targetRotY, 10 * delta);
+      headPivot.rotation.x = THREE.MathUtils.lerp(headPivot.rotation.x, targetRotX, 10 * delta);
+      headPivot.rotation.z = THREE.MathUtils.lerp(headPivot.rotation.z, targetRotZ, 10 * delta);
+
+      headPivot.position.y = Math.sin(clock.elapsedTime * 2.5) * 0.04;
     }
     return;
   }
