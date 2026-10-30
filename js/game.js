@@ -282,13 +282,13 @@ gltfLoader.load(
         sh.fragmentShader = sh.fragmentShader
           .replace('#include <common>', '#include <common>\nvarying vec3 vHeadPos;')
           .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\n' +
-            'if (vHeadPos.y < -0.36 || (vHeadPos.y < -0.20 && (abs(vHeadPos.z) > 0.14 || vHeadPos.x < -0.20 || vHeadPos.x > 0.24))) discard;');
+            'if (vHeadPos.y < -0.34 || (vHeadPos.y < -0.21 && vHeadPos.x < -0.04) || (vHeadPos.y < -0.19 && (abs(vHeadPos.z) > 0.13 || vHeadPos.x < -0.18 || vHeadPos.x > 0.23))) discard;');
       };
       child.material.needsUpdate = true;
     });
     const HS = 0.9;
     heroHead.scale.setScalar(HS);
-    heroHead.position.set(0, 1.62 + 0.30 * HS, 0);
+    heroHead.position.set(0, 1.80, 0);
     player.userData.blenderModel.add(heroHead);
 
     // 2. Busto interactivo para Escena 2
