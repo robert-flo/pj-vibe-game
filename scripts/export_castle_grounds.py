@@ -18,9 +18,9 @@ TEX_MAP = {
     "castle_grounds_seg7_texture_07000000": ("0.rgba16.png", TEX_LEVEL_DIR, 32, 64),
     "castle_grounds_seg7_texture_07001000": ("1.rgba16.png", TEX_LEVEL_DIR, 32, 64),
     "castle_grounds_seg7_texture_07002000": ("2.rgba16.png", TEX_LEVEL_DIR, 64, 32),
-    "castle_grounds_seg7_texture_0700C9E8": ("3.rgba16.png", TEX_LEVEL_DIR, 32, 32),
-    "castle_grounds_seg7_texture_0700D9E8": ("4.rgba16.png", TEX_LEVEL_DIR, 32, 32),
-    "castle_grounds_seg7_us_texture_0700EAE8": ("5.ia8.png", TEX_LEVEL_DIR, 32, 32),
+    "castle_grounds_seg7_texture_0700C9E8": ("3.rgba16.png", TEX_LEVEL_DIR, 32, 64),
+    "castle_grounds_seg7_texture_0700D9E8": ("4.rgba16.png", TEX_LEVEL_DIR, 32, 64),
+    "castle_grounds_seg7_us_texture_0700EAE8": ("5.ia8.png", TEX_LEVEL_DIR, 64, 32),
 
     # Outside generic textures
     "outside_09000000": ("castle_grounds_textures.00000.rgba16.png", TEX_OUTSIDE_DIR, 32, 32),
@@ -46,7 +46,6 @@ TEX_MAP = {
     "outside_0900BC00": ("castle_grounds_textures.0BC00.ia16.png", TEX_OUTSIDE_DIR, 32, 32),
 }
 
-# Copy textures to output directory
 copied_textures = {}
 for sym, (fname, src_dir, orig_w, orig_h) in TEX_MAP.items():
     src_file = os.path.join(src_dir, fname)
@@ -57,8 +56,13 @@ for sym, (fname, src_dir, orig_w, orig_h) in TEX_MAP.items():
     else:
         print(f"Warning: Missing texture file {src_file}")
 
-# Write MTL file
 with open(OUT_MTL_PATH, "w") as mtl:
+    mtl.write("newmtl mat_untextured_shade\n")
+    mtl.write("Ka 1.000 1.000 1.000\n")
+    mtl.write("Kd 1.000 1.000 1.000\n")
+    mtl.write("Ks 0.000 0.000 0.000\n")
+    mtl.write("d 1.0\n")
+    mtl.write("illum 2\n\n")
     for sym, (fname, orig_w, orig_h) in copied_textures.items():
         mtl.write(f"newmtl mat_{sym}\n")
         mtl.write("Ka 1.000 1.000 1.000\n")
@@ -69,21 +73,29 @@ with open(OUT_MTL_PATH, "w") as mtl:
         rel_tex_path = os.path.relpath(os.path.join(OUT_TEX_DIR, fname), os.path.dirname(OUT_OBJ_PATH))
         mtl.write(f"map_Kd {rel_tex_path}\n\n")
 
-print(f"MTL written with {len(copied_textures)} materials.")
+print(f"MTL written with {len(copied_textures) + 1} materials.")
 
-# Process all model.inc.c files (areas 1 to 11)
 all_v_lines = []
 all_vt_lines = []
-all_f_by_mat = {}
+all_f_by_mat = {"untextured_shade": []}
 
-v_offset = 1
-vt_offset = 1
-
-# SM64 scale factor: 1 SM64 unit = 0.01 Three.js units (or 100 SM64 units = 1 meter)
 SCALE = 0.01
 
-# Solo las capas estáticas del nivel (geo.inc.c principal): 1,2,4,5,6,9,10
-for area_idx in (1, 2, 4, 5, 6, 9, 10):
+# Static level layers + special_level_geo_03 (central castle spire at 0, 2867, -3924) + moat/cannon grills (7, 8)
+AREA_PLACEMENTS = [
+    (1, (0.0, 0.0, 0.0)),
+    (2, (0.0, 0.0, 0.0)),
+    (3, (0.0, 2867.0, -3924.0)),
+    (4, (0.0, 0.0, 0.0)),
+    (5, (0.0, 0.0, 0.0)),
+    (6, (0.0, 0.0, 0.0)),
+    (7, (0.0, 0.0, 0.0)),
+    (8, (0.0, 0.0, 0.0)),
+    (9, (0.0, 0.0, 0.0)),
+    (10, (0.0, 0.0, 0.0)),
+]
+
+for area_idx, (ox, oy, oz) in AREA_PLACEMENTS:
     mf = os.path.join(BASE_C_DIR, str(area_idx), "model.inc.c")
     if not os.path.exists(mf):
         continue
@@ -91,7 +103,6 @@ for area_idx in (1, 2, 4, 5, 6, 9, 10):
     with open(mf, "r") as f:
         text = f.read()
 
-    # Luces (gdSPDefLights1): ambiente, color difuso y dirección (int8)
     lights = {}
     for lm in re.finditer(r'Lights1\s+(\w+)\s*=\s*gdSPDefLights1\(([^)]+)\)', text):
         n = [int(t.strip(), 0) for t in lm.group(2).replace('\n', ' ').split(',') if t.strip()]
@@ -100,138 +111,116 @@ for area_idx in (1, 2, 4, 5, 6, 9, 10):
         lights[lm.group(1)] = (n[0:3], n[3:6], [c / mag for c in d])
     lit_file = 'gsSPLight' in text
 
-    # Parse vertex arrays
     vtx_arrays = {}
     for m in re.finditer(r'static const Vtx\s+(\w+)\s*\[\]\s*=\s*\{([^;]+)\};', text, re.DOTALL):
         arr_name = m.group(1)
         body = m.group(2)
         verts = []
         for vm in re.finditer(r'\{\{\{\s*(-?\d+),\s*(-?\d+),\s*(-?\d+)\},\s*0,\s*\{\s*(-?\d+),\s*(-?\d+)\},\s*\{\s*([^}]+)\}\}\}', body):
-            x = float(vm.group(1)) * SCALE
-            y = float(vm.group(2)) * SCALE
-            z = float(vm.group(3)) * SCALE
+            x = (float(vm.group(1)) + ox) * SCALE
+            y = (float(vm.group(2)) + oy) * SCALE
+            z = (float(vm.group(3)) + oz) * SCALE
             u_raw = float(vm.group(4))
             v_raw = float(vm.group(5))
             cols = [int(c.strip(), 0) for c in vm.group(6).split(',')]
             verts.append((x, y, z, u_raw, v_raw, cols[0], cols[1], cols[2]))
         vtx_arrays[arr_name] = verts
 
-    # Parse display lists
-    dl_matches = list(re.finditer(r'(?:static const Gfx|const Gfx)\s+(\w+)\s*\[\]\s*=\s*\{([^;]+)\};', text, re.DOTALL))
-    current_mat = "outside_09000000"
-    cur_light = None  # persiste entre display lists (como el estado RSP)
+    dl_dict = {}
+    root_dl = None
+    for dl in re.finditer(r'(static const Gfx|const Gfx)\s+(\w+)\s*\[\]\s*=\s*\{([^;]+)\};', text, re.DOTALL):
+        qual, name, body = dl.group(1), dl.group(2), dl.group(3)
+        dl_dict[name] = body
+        if qual == "const Gfx":
+            root_dl = name
 
-    for dl in dl_matches:
-        dl_body = dl.group(2)
+    state = {
+        "mat": "untextured_shade",
+        "tex_on": False,
+        "light": None,
+        "vcache": {},
+    }
 
-        # Update texture if present
-        tex_m = re.search(r'gsDPSetTextureImage\([^,]+,\s*[^,]+,\s*[^,]+,\s*(\w+)\)', dl_body)
-        if tex_m:
-            current_mat = tex_m.group(1)
+    def run_dl(dl_name):
+        if dl_name not in dl_dict:
+            return
+        for line in dl_dict[dl_name].split("\n"):
+            if "gsSPTexture(" in line:
+                if "G_ON" in line:
+                    state["tex_on"] = True
+                elif "G_OFF" in line:
+                    state["tex_on"] = False
+                    state["mat"] = "untextured_shade"
 
-        if current_mat not in all_f_by_mat:
-            all_f_by_mat[current_mat] = []
-
-        # Current vertex cache (indices 0..31)
-        vcache = {}
-        lines = dl_body.split("\n")
-
-        # Get texture dimensions for normalized UVs
-        if current_mat in copied_textures:
-            _, orig_w, orig_h = copied_textures[current_mat]
-        else:
-            orig_w, orig_h = 32, 32
-
-        for line in lines:
-            # Check texture within line
             ltm = re.search(r'gsDPSetTextureImage\([^,]+,\s*[^,]+,\s*[^,]+,\s*(\w+)\)', line)
             if ltm:
-                current_mat = ltm.group(1)
-                if current_mat not in all_f_by_mat:
-                    all_f_by_mat[current_mat] = []
-                if current_mat in copied_textures:
-                    _, orig_w, orig_h = copied_textures[current_mat]
-                else:
-                    orig_w, orig_h = 32, 32
+                state["mat"] = ltm.group(1)
+                all_f_by_mat.setdefault(state["mat"], [])
 
             lgm = re.search(r'gsSPLight\(&(\w+)\.l,\s*1\)', line)
             if lgm:
-                cur_light = lgm.group(1)
+                state["light"] = lgm.group(1)
 
-            # Check vertex load
+            subm = re.search(r'gsSP(?:Display|Branch)List\((\w+)\)', line)
+            if subm:
+                run_dl(subm.group(1))
+                continue
+
+            active_mat = state["mat"] if state["tex_on"] else "untextured_shade"
+            all_f_by_mat.setdefault(active_mat, [])
+            if active_mat in copied_textures:
+                _, orig_w, orig_h = copied_textures[active_mat]
+            else:
+                orig_w, orig_h = 32, 32
+
             vm = re.search(r'gsSPVertex\((\w+),\s*(\d+),\s*(\d+)\)', line)
             if vm:
-                varr = vm.group(1)
-                count = int(vm.group(2))
-                start = int(vm.group(3))
+                varr, count, start = vm.group(1), int(vm.group(2)), int(vm.group(3))
                 if varr in vtx_arrays:
                     src_verts = vtx_arrays[varr]
                     for i in range(count):
                         if i < len(src_verts):
                             vx, vy, vz, ur, vr, cr, cg, cb = src_verts[i]
-                            if lit_file and cur_light in lights:
-                                amb, dif, ldir = lights[cur_light]
+                            if lit_file and state["light"] in lights:
+                                amb, dif, ldir = lights[state["light"]]
                                 nx, ny, nz = [((c - 256) if c > 127 else c) / 127.0 for c in (cr, cg, cb)]
                                 ndl = max(0.0, nx * ldir[0] + ny * ldir[1] + nz * ldir[2])
                                 cr, cg, cb = [min(1.0, (amb[k] + dif[k] * ndl) / 255.0) for k in range(3)]
                             else:
                                 cr, cg, cb = cr / 255.0, cg / 255.0, cb / 255.0
-                            # Normalized UVs
                             u_norm = (ur / 32.0) / orig_w
-                            # In OpenGL / OBJ UV space, V is inverted
                             v_norm = 1.0 - ((vr / 32.0) / orig_h)
-
                             all_v_lines.append(f"v {vx:.4f} {vy:.4f} {vz:.4f} {cr:.4f} {cg:.4f} {cb:.4f}\n")
                             all_vt_lines.append(f"vt {u_norm:.6f} {v_norm:.6f}\n")
+                            state["vcache"][start + i] = len(all_v_lines)
 
-                            curr_idx = len(all_v_lines) # 1-based index in OBJ
-                            vcache[start + i] = curr_idx
-
-            # Triangles
             t1m = re.search(r'gsSP1Triangle\(\s*(\d+),\s*(\d+),\s*(\d+)', line)
             if t1m:
-                i0 = int(t1m.group(1))
-                i1 = int(t1m.group(2))
-                i2 = int(t1m.group(3))
-                if i0 in vcache and i1 in vcache and i2 in vcache:
-                    v0 = vcache[i0]
-                    v1 = vcache[i1]
-                    v2 = vcache[i2]
-                    all_f_by_mat[current_mat].append(f"f {v0}/{v0} {v1}/{v1} {v2}/{v2}\n")
+                i0, i1, i2 = int(t1m.group(1)), int(t1m.group(2)), int(t1m.group(3))
+                vc = state["vcache"]
+                if i0 in vc and i1 in vc and i2 in vc:
+                    all_f_by_mat[active_mat].append(f"f {vc[i0]}/{vc[i0]} {vc[i1]}/{vc[i1]} {vc[i2]}/{vc[i2]}\n")
 
             t2m = re.search(r'gsSP2Triangles\(\s*(\d+),\s*(\d+),\s*(\d+),\s*[^,]+,\s*(\d+),\s*(\d+),\s*(\d+)', line)
             if t2m:
-                i0 = int(t2m.group(1))
-                i1 = int(t2m.group(2))
-                i2 = int(t2m.group(3))
-                if i0 in vcache and i1 in vcache and i2 in vcache:
-                    v0 = vcache[i0]
-                    v1 = vcache[i1]
-                    v2 = vcache[i2]
-                    all_f_by_mat[current_mat].append(f"f {v0}/{v0} {v1}/{v1} {v2}/{v2}\n")
+                vc = state["vcache"]
+                for a, b, c in ((int(t2m.group(1)), int(t2m.group(2)), int(t2m.group(3))),
+                                (int(t2m.group(4)), int(t2m.group(5)), int(t2m.group(6)))):
+                    if a in vc and b in vc and c in vc:
+                        all_f_by_mat[active_mat].append(f"f {vc[a]}/{vc[a]} {vc[b]}/{vc[b]} {vc[c]}/{vc[c]}\n")
 
-                i3 = int(t2m.group(4))
-                i4 = int(t2m.group(5))
-                i5 = int(t2m.group(6))
-                if i3 in vcache and i4 in vcache and i5 in vcache:
-                    v3 = vcache[i3]
-                    v4 = vcache[i4]
-                    v5 = vcache[i5]
-                    all_f_by_mat[current_mat].append(f"f {v3}/{v3} {v4}/{v4} {v5}/{v5}\n")
+    if root_dl:
+        run_dl(root_dl)
 
-# Write OBJ file
 with open(OUT_OBJ_PATH, "w") as obj:
     obj.write(f"mtllib {os.path.basename(OUT_MTL_PATH)}\n")
     obj.write("o PeachCastleGrounds\n\n")
-
     for vl in all_v_lines:
         obj.write(vl)
     obj.write("\n")
-
     for vtl in all_vt_lines:
         obj.write(vtl)
     obj.write("\n")
-
     for mat, faces in all_f_by_mat.items():
         if faces:
             obj.write(f"usemtl mat_{mat}\n")
