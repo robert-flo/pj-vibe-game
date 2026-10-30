@@ -1320,7 +1320,7 @@ function updateSignpostDialog() {
 
 function updatePhysics(delta) {
   if (currentScene === SCENE_DOOR_OPENING) {
-    doorAnimElapsed = (performance.now() - doorAnimStartTime) / 1000;
+    doorAnimElapsed = (Date.now() - doorAnimStartTime) / 1000;
     const openT = Math.min(1, doorAnimElapsed / 1.15);
     const eased = 1 - Math.pow(1 - openT, 3);
     // Las dos hojas estelares se abren hacia el pórtico (+Z) como en Super Mario 64
@@ -1451,7 +1451,7 @@ function startDoorOpeningSequence() {
   if (currentScene !== SCENE_6_GAMEPLAY || !castleLoaded) return;
   currentScene = SCENE_DOOR_OPENING;
   doorAnimElapsed = 0;
-  doorAnimStartTime = performance.now();
+  doorAnimStartTime = Date.now();
   coins.forEach((c) => {
     if (c.userData.active && c.position.z < -21.5) c.visible = false;
   });
