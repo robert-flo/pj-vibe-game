@@ -715,14 +715,18 @@ function createBitcoinFaceTexture() {
   ctx.arc(128, 128, 106, 0, Math.PI * 2);
   ctx.stroke();
 
+  ctx.save();
+  ctx.translate(128, 128);
+  ctx.rotate(Math.PI / 2);
   ctx.fillStyle = '#78350f';
   ctx.font = 'bold 142px Arial, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('₿', 132, 136);
+  ctx.fillText('₿', 4, 8);
 
   ctx.fillStyle = '#fef9c3';
-  ctx.fillText('₿', 127, 131);
+  ctx.fillText('₿', -1, 3);
+  ctx.restore();
 
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
