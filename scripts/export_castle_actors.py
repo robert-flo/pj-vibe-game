@@ -152,7 +152,7 @@ export_actor_to_glb(
     {
         "door_seg3_texture_03009D10": ("polished_wooden_door.rgba16.png", "door", 32, 64),
         "door_seg3_texture_0300AD10": ("polished_wooden_door_overlay.rgba16.png", "door", 32, 64),
-        "door_seg3_texture_03012510": ("one_star_door_sign.rgba16.png", "door", 32, 32),
+        "door_seg3_texture_03012510": ("zero_star_door_sign.rgba16.png", "door", 32, 32),
     },
     0.0025,
     "castle_door"
