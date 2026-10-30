@@ -208,35 +208,6 @@ scene.add(eyeCatchlight);
 let bukeleHeadMesh = null;
 const gltfLoader = new GLTFLoader();
 
-// Carga de bukele_head.glb (Modelo fotorrealista Tripo optimizado y suavizado)
-gltfLoader.load(
-  'assets/models/bukele_head.glb',
-  (gltf) => {
-    bukeleHeadMesh = gltf.scene;
-
-    // Suavizado total de normales y acabado de piel natural cálido
-    bukeleHeadMesh.traverse((child) => {
-      if (child.isMesh) {
-        child.material.flatShading = false;
-        child.material.roughness = 0.58; // Piel mate natural, elimina reflejos plásticos
-        child.material.metalness = 0.0;
-        child.material.needsUpdate = true;
-        if (child.geometry) {
-          child.geometry.computeVertexNormals();
-        }
-      }
-    });
-
-    bukeleHeadMesh.scale.set(1.45, 1.45, 1.45);
-    bukeleHeadMesh.position.set(0, -0.2, 0);
-    bukeleHeadMesh.rotation.y = -Math.PI / 2; // Orientar exactamente de frente a la cámara
-    headPivot.add(bukeleHeadMesh);
-    console.log('[GLTF] Cabeza oficial bukele_head.glb cargada con iluminacion calida y piel suave.');
-  },
-  undefined,
-  (err) => console.warn('[GLTF Error] bukele_head.glb:', err)
-);
-
 /* ==========================================================================
    4. NAYIB BUKELE: MODELO 3D DE CUERPO ENTERO PARA GAMEPLAY
    ========================================================================== */
@@ -277,14 +248,33 @@ function createBukeleCharacter() {
     heroRoot.add(gltf.scene);
   }, undefined, (err) => console.warn('[GLTF] bukele_body.glb:', err));
 
-  gltfLoader.load('assets/models/bukele_head.glb', (gltf) => {
-    const head = gltf.scene;
-    head.traverse((child) => {
+  return group;
+}
+
+const player = createBukeleCharacter();
+scene.add(player);
+player.position.set(0, 0, 8.8);
+
+// Carga única de bukele_head.glb (reutilizada en Escena 2 y clonada para el héroe en Gameplay)
+gltfLoader.load(
+  'assets/models/bukele_head.glb',
+  (gltf) => {
+    const rawHead = gltf.scene;
+    rawHead.traverse((child) => {
+      if (child.isMesh && child.geometry) {
+        child.geometry.computeVertexNormals();
+      }
+    });
+
+    // 1. Clon para el héroe jugable con recorte limpio de busto/cuello
+    const heroHead = rawHead.clone(true);
+    heroHead.traverse((child) => {
       if (!child.isMesh) return;
       child.castShadow = true;
+      child.material = child.material.clone();
+      child.material.flatShading = false;
       child.material.roughness = 0.6;
       child.material.metalness = 0;
-      // Recorte limpio del busto (sin hombros/saco): solo cabeza y cuello
       child.material.onBeforeCompile = (sh) => {
         sh.vertexShader = sh.vertexShader
           .replace('#include <common>', '#include <common>\nvarying vec3 vHeadPos;')
@@ -297,17 +287,29 @@ function createBukeleCharacter() {
       child.material.needsUpdate = true;
     });
     const HS = 0.9;
-    head.scale.setScalar(HS);
-    head.position.set(0, 1.62 + 0.30 * HS, 0);
-    heroRoot.add(head);
-  }, undefined, (err) => console.warn('[GLTF] bukele_head.glb (héroe):', err));
+    heroHead.scale.setScalar(HS);
+    heroHead.position.set(0, 1.62 + 0.30 * HS, 0);
+    player.userData.blenderModel.add(heroHead);
 
-  return group;
-}
-
-const player = createBukeleCharacter();
-scene.add(player);
-player.position.set(0, 0, 8.8);
+    // 2. Busto interactivo para Escena 2
+    bukeleHeadMesh = rawHead;
+    bukeleHeadMesh.traverse((child) => {
+      if (child.isMesh) {
+        child.material.flatShading = false;
+        child.material.roughness = 0.58;
+        child.material.metalness = 0.0;
+        child.material.needsUpdate = true;
+      }
+    });
+    bukeleHeadMesh.scale.set(1.45, 1.45, 1.45);
+    bukeleHeadMesh.position.set(0, -0.2, 0);
+    bukeleHeadMesh.rotation.y = -Math.PI / 2;
+    headPivot.add(bukeleHeadMesh);
+    console.log('[GLTF] Cabeza oficial bukele_head.glb cargada e instanciada.');
+  },
+  undefined,
+  (err) => console.warn('[GLTF Error] bukele_head.glb:', err)
+);
 
 /* ==========================================================================
    5. ESCENARIO 3D (Pradera, Tubería N64 de Inicio, Colina y Plataformas)
