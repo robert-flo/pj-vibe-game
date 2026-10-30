@@ -2,7 +2,7 @@
 
 > **Propósito**: Bitácora viva en la raíz de `pj-vibe-game` para retomar el desarrollo de inmediato en caso de corte de sesión o límite de cuota. Se actualiza junto con cada avance relevante.
 
-**Última actualización**: 2026-10-29 21:48 (UTC-6)  
+**Última actualización**: 2026-10-29 21:56 (UTC-6)  
 **Repositorio principal**: `/home/omarchy/Projects/pj-vibe-game` (`https://robert-flo.github.io/pj-vibe-game/`)  
 **Repositorio de documentación**: `/home/omarchy/Projects/pj-vibe-game-docs` (`https://robert-flo.github.io/pj-vibe-game-docs/`)
 
@@ -32,10 +32,16 @@
 4. **Audio Auténtico Extraído de la ROM US del Usuario**:
    - Secuencias `.m64` y muestras `.aiff` sintetizadas con `scripts/render_sm64_audio.py` hacia `assets/audio/sm64/`: `castle_grounds_bgm.mp3`, `star_fanfare.mp3`, `coin.mp3`, `door_open.mp3`, `mario_0C.mp3` y 5 voces clásicas de salto. *(La ROM original se mantiene fuera de Git en `/home/omarchy/Projects/rom/`).*
 
-5. **Documentación y Herramientas de Captura**:
+5. **Documentación Académica e Historial Completo para Evaluación (`pj-vibe-game-docs`)**:
    - `scripts/shot.sh` configurado con Chromium headless + SwiftShader WebGL (~6s por captura).
    - `PLAN.md`, `art/BAR.md`, `art/LEDGER.md` al día en `pj-vibe-game`.
-   - `_docs/prompts.md` (hasta Prompt 19) e `_docs/iteracion.md` (hasta Iteración 18) publicados en `pj-vibe-game-docs`.
+   - Sitio Jekyll completo actualizado y compilado (`bundle exec jekyll build` en 0.38s sin errores) en `pj-vibe-game-docs`, preservando **todo el proceso histórico** desde el prototipo inicial hasta la versión final:
+     - `index.md`, `README.md` y `_docs/introduccion.md` (evolución desde el *Vertical Slice* hasta *Castle Grounds* HD).
+     - `_docs/arquitectura.md` (máquina de 8 estados, pipelines Blender/Python, shader GLSL `onBeforeCompile` y audio híbrido).
+     - `_docs/prompts.md` (los 19 prompts cronológicos íntegros).
+     - `_docs/iteracion.md` (las 18 iteraciones + galería visual comparativa *Antes/Después* con 7 capturas históricas en `assets/images/proceso/`).
+     - `_docs/validacion.md` (los 9 bugs reales diagnosticados y resueltos con código y capturas de los fallos intermedios).
+     - `_docs/reflexion.md` y `_docs/demo.md` actualizados y sincronizados en `origin/main`.
 
 ---
 
