@@ -423,6 +423,14 @@ gltfLoader.load(
     castleLoaded = true;
     placeBitcoinsOnPath();
     placeWoodenSignposts();
+    if (currentScene === SCENE_6_GAMEPLAY) {
+      const gy = sampleGround(player.position.x, player.position.z, player.position.y + 4.0);
+      if (gy > -900) {
+        player.position.y = gy;
+        velocityY = 0;
+        isGrounded = true;
+      }
+    }
     console.log('[GLTF] castle_grounds.glb cargado:', collisionMeshes.length, 'mallas');
   },
   undefined,
@@ -663,13 +671,16 @@ function placeWoodenSignposts() {
 const groundRay = new THREE.Raycaster();
 const RAY_DOWN = new THREE.Vector3(0, -1, 0);
 const _rayOrigin = new THREE.Vector3();
+const _worldNormal = new THREE.Vector3();
 function sampleGround(x, z, fromY) {
   _rayOrigin.set(x, fromY, z);
   groundRay.set(_rayOrigin, RAY_DOWN);
   groundRay.far = 400;
   const hits = groundRay.intersectObjects(collisionMeshes, false);
   for (const h of hits) {
-    if (!h.face || Math.abs(h.face.normal.y) > 0.42) {
+    if (!h.face) return h.point.y;
+    _worldNormal.copy(h.face.normal).transformDirection(h.object.matrixWorld);
+    if (Math.abs(_worldNormal.y) > 0.42) {
       return h.point.y;
     }
   }
@@ -1051,8 +1062,6 @@ if (requestedScene === '2') {
   setTimeout(() => {
     goToScene2();
     goToScene3(true);
-    goToSceneLetter();
-    goToSceneCinematic();
     setTimeout(() => goToSceneGameplay(), 50);
   }, 100);
 }
@@ -1202,7 +1211,10 @@ function wallAhead(dx, dz) {
     wallRay.set(_wallOrigin, _wallDir);
     wallRay.far = len + PLAYER_RADIUS;
     const hits = wallRay.intersectObjects(collisionMeshes, false);
-    if (hits.length && hits[0].face && Math.abs(hits[0].face.normal.y) < 0.55) return true;
+    if (hits.length && hits[0].face) {
+      _worldNormal.copy(hits[0].face.normal).transformDirection(hits[0].object.matrixWorld);
+      if (Math.abs(_worldNormal.y) < 0.55) return true;
+    }
   }
   return false;
 }
@@ -1333,7 +1345,7 @@ function updatePhysics(delta) {
     return;
   }
 
-  if (currentScene !== SCENE_6_GAMEPLAY) return;
+  if (currentScene !== SCENE_6_GAMEPLAY || !castleLoaded) return;
 
   let moveX = 0;
   let moveZ = 0;
@@ -1429,7 +1441,7 @@ function updatePhysics(delta) {
 }
 
 function startDoorOpeningSequence() {
-  if (currentScene !== SCENE_6_GAMEPLAY) return;
+  if (currentScene !== SCENE_6_GAMEPLAY || !castleLoaded) return;
   currentScene = SCENE_DOOR_OPENING;
   doorAnimElapsed = 0;
   if (signDialogEl) signDialogEl.classList.add('hidden');
