@@ -14,4 +14,9 @@
 | `env_mountain_hill` | 3D Terrain | Multi-tier stepped hill | `ref-01` | final | 3-tiered slope with ramp paths |
 | `env_platforms` | 3D Platforms | Floating brick steps | `ref-01` | final | Yellow/orange stone platforms |
 | `env_trees` | 3D Props | Low-poly pine cones | `ref-01` | final | Brown trunk with layered green cones |
+| `prop_warp_pipe` | 3D Prop | Procedural Three.js Mesh | `ref-01` | final | Classic N64 green pipe with sandy rim at player spawn |
+| `env_castle_grounds` | 3D Environment | 3D Mesh with RENDER96-HD textures | `ref-01-castle-wide` | in-progress | Authentic Peach's Castle exterior with moat, stone bridge and facade |
+| `prop_castle_doors` | 3D Interactable | 3D Animated Door Mesh | `ref-01` | in-progress | Double castle entrance doors that swing open upon approach |
+| `hero_bukele_gameplay` | 3D Character (GLB) | Blender Pipeline (`Desktop/assets2`) | `Desktop/assets2` | in-progress | Formal dark navy suit with black t-shirt and trimmed beard |
+| `audio_castle_grounds_bgm` | Audio Track | Remastered SM64 Castle Grounds BGM | `ref-01` | in-progress | Joyous orchestral outdoor theme |
 | `audio_sfx_retro` | Audio Engine | Web Audio API Synthesizer | `ref-01` | final | Jump, coin, victory, and start chime oscillators |
