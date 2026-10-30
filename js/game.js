@@ -1459,6 +1459,7 @@ function startDoorOpeningSequence() {
     }
     updatePhysics(0.05);
     updateCamera(0.05);
+    renderer.render(scene, camera);
   }, 50);
   coins.forEach((c) => {
     if (c.userData.active && c.position.z < -21.5) c.visible = false;
