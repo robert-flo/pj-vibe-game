@@ -824,6 +824,44 @@ body, html {
   margin-bottom: 22px;
   font-size: 16px;
   color: #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sign-dialog {
+  position: fixed;
+  top: 86px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 45;
+  max-width: 520px;
+  width: 88%;
+  background: rgba(10, 15, 28, 0.88);
+  border: 2px solid rgba(251, 191, 36, 0.85);
+  border-radius: 14px;
+  padding: 14px 20px;
+  color: #f8fafc;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+  animation: cardPop 0.22s ease-out;
+}
+
+.sign-dialog-title {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fbbf24;
+  margin-bottom: 5px;
+}
+
+.sign-dialog p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+  color: #f1f5f9;
 }
 
 .stats strong {

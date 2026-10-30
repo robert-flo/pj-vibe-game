@@ -284,7 +284,7 @@ function createBukeleCharacter() {
       child.castShadow = true;
       child.material.roughness = 0.6;
       child.material.metalness = 0;
-      // Recorte del busto (sin hombros/saco): solo cabeza y cuello. Ejes de Three: (x, arriba, z)
+      // Recorte limpio del busto (sin hombros/saco): solo cabeza y cuello
       child.material.onBeforeCompile = (sh) => {
         sh.vertexShader = sh.vertexShader
           .replace('#include <common>', '#include <common>\nvarying vec3 vHeadPos;')
@@ -292,7 +292,7 @@ function createBukeleCharacter() {
         sh.fragmentShader = sh.fragmentShader
           .replace('#include <common>', '#include <common>\nvarying vec3 vHeadPos;')
           .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\n' +
-            'if (vHeadPos.y < -0.45 || (vHeadPos.y < -0.30 && (abs(vHeadPos.z) > 0.2 || vHeadPos.x < -0.3))) discard;');
+            'if (vHeadPos.y < -0.36 || (vHeadPos.y < -0.20 && (abs(vHeadPos.z) > 0.14 || vHeadPos.x < -0.20 || vHeadPos.x > 0.24))) discard;');
       };
       child.material.needsUpdate = true;
     });
@@ -395,14 +395,15 @@ gltfLoader.load(
     castle.traverse((child) => {
       if (!child.isMesh) return;
       const old = child.material;
-      // SM64 no usa luces: textura x color de vértice (shade), sin iluminación
-      const isShadowDecal = (old.name || '').includes('0900BC00'); // sombras IA16 (alpha suave)
+      const mname = old.name || '';
+      const isShadowDecal = mname.includes('0900BC00');
+      const isUntextured = mname.includes('untextured_shade') || !old.map;
       const mat = new THREE.MeshBasicMaterial({
-        map: old.map || null,
+        map: isUntextured ? null : (old.map || null),
         vertexColors: !!child.geometry.attributes.color,
         side: THREE.DoubleSide,
         transparent: isShadowDecal,
-        alphaTest: isShadowDecal ? 0 : 0.5, // recortes 1-bit del N64 (vallas, árboles, ventanas)
+        alphaTest: (isShadowDecal || isUntextured) ? 0 : 0.5,
         depthWrite: !isShadowDecal,
         polygonOffset: isShadowDecal,
         polygonOffsetFactor: -2
@@ -413,19 +414,20 @@ gltfLoader.load(
         mat.map.anisotropy = 8;
       }
       child.material = mat;
-      collisionMeshes.push(child);
+      if (!isShadowDecal) collisionMeshes.push(child);
     });
     scene.add(castle);
     castle.updateMatrixWorld(true);
     castleLoaded = true;
     placeBitcoinsOnPath();
+    placeWoodenSignposts();
     console.log('[GLTF] castle_grounds.glb cargado:', collisionMeshes.length, 'mallas');
   },
   undefined,
   (err) => console.warn('[GLTF Error] castle_grounds.glb:', err)
 );
 
-// Foso: dos planos de agua con la textura original (alpha 0x96)
+// Foso y lago: planos de agua con la textura original (alpha 0x96)
 function addWaterBox(x0, z0, x1, z1) {
   const w = (x1 - x0) * SM64_SCALE;
   const d = (z1 - z0) * SM64_SCALE;
@@ -435,17 +437,227 @@ function addWaterBox(x0, z0, x1, z1) {
   tex.repeat.set(w / 10, d / 10);
   const mesh = new THREE.Mesh(
     new THREE.PlaneGeometry(w, d),
-    new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.59, depthWrite: false })
+    new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.62, depthWrite: false })
   );
   mesh.rotation.x = -Math.PI / 2;
   mesh.position.set(((x0 + x1) / 2) * SM64_SCALE, MOAT_WATER_Y, ((z0 + z1) / 2) * SM64_SCALE);
   scene.add(mesh);
-  return mesh;
+  return { mesh, tex };
 }
 const moatWater = addWaterBox(-7129, -7222, 8253, -58);
 const lakeWater = addWaterBox(1024, -58, 8230, 8137);
 
-// Raycast hacia abajo para obtener la altura del suelo en (x, z) desde fromY
+// Cascada oficial de Castle Grounds (extraída de movtext.inc.c)
+const waterfallTex = new THREE.TextureLoader().load('assets/textures/castle_grounds/water.png');
+waterfallTex.colorSpace = THREE.SRGBColorSpace;
+waterfallTex.wrapS = waterfallTex.wrapT = THREE.RepeatWrapping;
+(function buildCastleWaterfall() {
+  const wfVerts = [
+    [-4469, -800, -6413, 0, 0], [-5525, 1171, -7026, 2, 0], [-6292, 2028, -7463, 4, 0], [-7302, 2955, -7461, 6, 0],
+    [-4883, -800, -5690, 0, 3], [-5547, 1110, -6097, 2, 3], [-6732, 2587, -6770, 4, 3], [-7603, 3004, -7160, 6, 3],
+    [-5580, -800, -4740, 0, 6], [-6205, 1068, -5347, 2, 6], [-7249, 2566, -6192, 4, 6],
+    [-6895, -800, -4714, 0, 9], [-7201, 1083, -5071, 2, 9], [-7578, 2042, -5766, 4, 9], [-8132, 2961, -6761, 6, 9]
+  ];
+  const wfIdx = [
+    0,1,5, 0,5,4, 1,2,6, 1,6,5, 2,3,6, 3,7,6,
+    4,5,9, 4,9,8, 5,6,9, 6,10,9, 6,7,10, 8,9,12,
+    8,12,11, 9,10,13, 9,13,12, 10,7,14, 10,14,13
+  ];
+  const pos = new Float32Array(wfVerts.length * 3);
+  const uvs = new Float32Array(wfVerts.length * 2);
+  wfVerts.forEach(([x, y, z, s, t], i) => {
+    pos[i * 3] = x * SM64_SCALE;
+    pos[i * 3 + 1] = y * SM64_SCALE;
+    pos[i * 3 + 2] = z * SM64_SCALE;
+    uvs[i * 2] = t * 0.45;
+    uvs[i * 2 + 1] = s * 0.65;
+  });
+  const geom = new THREE.BufferGeometry();
+  geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geom.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+  geom.setIndex(wfIdx);
+  const mesh = new THREE.Mesh(
+    geom,
+    new THREE.MeshBasicMaterial({ map: waterfallTex, transparent: true, opacity: 0.78, side: THREE.DoubleSide, depthWrite: false })
+  );
+  scene.add(mesh);
+})();
+
+// Banderas rojas ondeando en las 4 torres de Peach's Castle (script.c: bhvCastleFlagWaving)
+const castleFlags = [];
+(function buildCastleFlags() {
+  const flagCoords = [
+    [-3213, 3348, -3011],
+    [ 3213, 3348, -3011],
+    [-3835, 3348, -6647],
+    [ 3835, 3348, -6647]
+  ];
+  const poleMat = new THREE.MeshBasicMaterial({ color: 0xd4d4d8 });
+  const flagMat = new THREE.MeshBasicMaterial({ color: 0xdc2626, side: THREE.DoubleSide });
+  flagCoords.forEach(([fx, fy, fz], idx) => {
+    const g = new THREE.Group();
+    g.position.set(fx * SM64_SCALE, fy * SM64_SCALE, fz * SM64_SCALE);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 4.2, 8), poleMat);
+    pole.position.y = 1.6;
+    g.add(pole);
+    const clothGeom = new THREE.PlaneGeometry(3.6, 1.9, 8, 2);
+    clothGeom.translate(1.8, 0, 0);
+    const cloth = new THREE.Mesh(clothGeom, flagMat);
+    cloth.position.y = 2.65;
+    cloth.userData = { basePos: clothGeom.attributes.position.array.slice(), phase: idx * 1.3 };
+    g.add(cloth);
+    scene.add(g);
+    castleFlags.push(cloth);
+  });
+})();
+
+// Los 26 árboles oficiales de Castle Grounds (collision.inc.c: special_bubble_tree)
+const castleTrees = [];
+const treeTrunks = [];
+(function buildCastleTrees() {
+  const treeCoords = [
+    [-1333, 711, 1881], [-6220, 468, 3458], [-5069, 350, 3221], [-2566, 438, 2626],
+    [-1900, 401, 2868], [ 6399, 494,-1680], [  767, 498, 2598], [ 1476, 189, 3280],
+    [ 3153, 206,  469], [ 6178, 219,  167], [-6510, 260, 1411], [ 5457, 528,-3259],
+    [ 5868, 698,-4453], [ 6408, 869,-5314], [-4711, 342,  433], [ 1132, 365, 1977],
+    [-5506, 364, -661], [-6269, 402,-2145], [-5600, 440,-2627], [ 1919, 268, 1157],
+    [-5957, 517,-3447], [-2021, 633, 1468], [ -109, 613, 3008], [ 5774, 413,-1114],
+    [ 5954, 526,-2846], [-5204, 296,  811]
+  ];
+  const loader = new THREE.TextureLoader();
+  const texL = loader.load('assets/textures/castle_grounds/tree_left_side.rgba16.png');
+  const texR = loader.load('assets/textures/castle_grounds/tree_right_side.rgba16.png');
+  [texL, texR].forEach((t) => {
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+  });
+
+  // Geometría exacta de tree_seg3_dl_0302FEE8 (2 triángulos unidos al centro)
+  function makeHalfTri(x0, x1, u0, u1, tex) {
+    const g = new THREE.BufferGeometry();
+    const v = new Float32Array([
+      x0, -0.09, 0,
+      x1, -0.09, 0,
+      0,   8.00, 0
+    ]);
+    const uv = new Float32Array([
+      u0, 1 - (2012 / 32) / 64,
+      u1, 1 - (2012 / 32) / 64,
+      (x0 < 0 ? u1 : u0), 1 - (-712 / 32) / 64
+    ]);
+    g.setAttribute('position', new THREE.BufferAttribute(v, 3));
+    g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    return new THREE.Mesh(
+      g,
+      new THREE.MeshBasicMaterial({ map: tex, alphaTest: 0.5, side: THREE.DoubleSide })
+    );
+  }
+  const leftProto = makeHalfTri(-3.56, 0, (-796 / 32) / 32, (990 / 32) / 32, texL);
+  const rightProto = makeHalfTri(0, 3.58, 0, (1756 / 32) / 32, texR);
+
+  treeCoords.forEach(([tx, ty, tz]) => {
+    const px = tx * SM64_SCALE;
+    const py = ty * SM64_SCALE;
+    const pz = tz * SM64_SCALE;
+    const tg = new THREE.Group();
+    tg.position.set(px, py, pz);
+    tg.add(leftProto.clone(), rightProto.clone());
+    scene.add(tg);
+    castleTrees.push(tg);
+    treeTrunks.push({ x: px, y: py, z: pz, r: 0.65 });
+  });
+})();
+
+// Puertas Dobles Estelares de Peach's Castle (collision.inc.c: special_castle_door_warp)
+const doorLeftPivot = new THREE.Group();
+const doorRightPivot = new THREE.Group();
+doorLeftPivot.position.set(-1.53, 8.03, -31.55);
+doorRightPivot.position.set( 1.54, 8.03, -31.55);
+scene.add(doorLeftPivot, doorRightPivot);
+
+gltfLoader.load(
+  'assets/models/castle_door.glb',
+  (gltf) => {
+    const proto = gltf.scene;
+    proto.traverse((child) => {
+      if (!child.isMesh) return;
+      const old = child.material;
+      const isUntextured = (old.name || '').includes('untextured_shade') || !old.map;
+      const mat = new THREE.MeshBasicMaterial({
+        map: isUntextured ? null : old.map,
+        vertexColors: !!child.geometry.attributes.color,
+        alphaTest: isUntextured ? 0 : 0.45,
+        side: THREE.DoubleSide
+      });
+      if (mat.map) mat.map.colorSpace = THREE.SRGBColorSpace;
+      child.material = mat;
+    });
+    const leftLeaf = proto.clone(true);
+    const rightLeaf = proto.clone(true);
+    rightLeaf.scale.x = -1; // Espejo simétrico con emblema de estrella mirando hacia +Z (puente)
+    doorLeftPivot.add(leftLeaf);
+    doorRightPivot.add(rightLeaf);
+  },
+  undefined,
+  (err) => console.warn('[GLTF Error] castle_door.glb:', err)
+);
+
+// Carteles cómicos de madera (wooden_signpost.glb) a lo largo del recorrido
+const signposts = [];
+const SIGN_DEFINITIONS = [
+  {
+    x: -15.66, z: 35.03, yaw: 0.35,
+    title: '🪧 Decreto Presidencial N.° 64',
+    text: '«Bienvenido a los Jardines Reales. Queda estrictamente prohibido perder vidas; aquí todos los Bitcoins son de curso legal.»'
+  },
+  {
+    x: -5.80, z: 16.50, yaw: 0.45,
+    title: '🪧 Ministerio de Obras Públicas 64',
+    text: '«Puente Real recién pavimentado con texturas HD. Cero baches, cero tortugas Koopa, 100% iluminado.»'
+  },
+  {
+    x: 1.95, z: -2.20, yaw: -0.35,
+    title: '🪧 Guardia del Castillo',
+    text: '«La Primera Dama Gabriela te espera cruzando las Puertas Estelares al fondo del puente. ¡Sigue los Bitcoins!»'
+  },
+  {
+    x: 17.40, z: 25.00, yaw: -Math.PI / 2,
+    title: '🪧 Mirador de la Laguna',
+    text: '«Zona ecológica protegida: prohibido lanzar pingüinos o nadar de traje formal en el foso del castillo.»'
+  }
+];
+
+function placeWoodenSignposts() {
+  gltfLoader.load(
+    'assets/models/wooden_signpost.glb',
+    (gltf) => {
+      const proto = gltf.scene;
+      proto.traverse((c) => {
+        if (!c.isMesh) return;
+        const mat = new THREE.MeshBasicMaterial({
+          map: c.material.map || null,
+          vertexColors: !!c.geometry.attributes.color,
+          side: THREE.DoubleSide
+        });
+        if (mat.map) mat.map.colorSpace = THREE.SRGBColorSpace;
+        c.material = mat;
+      });
+      SIGN_DEFINITIONS.forEach((def) => {
+        const gy = sampleGround(def.x, def.z, 12.0);
+        if (gy < -900) return;
+        const sg = proto.clone(true);
+        sg.position.set(def.x, gy, def.z);
+        sg.rotation.y = def.yaw;
+        scene.add(sg);
+        signposts.push({ x: def.x, y: gy, z: def.z, title: def.title, text: def.text });
+      });
+    },
+    undefined,
+    (err) => console.warn('[GLTF Error] wooden_signpost.glb:', err)
+  );
+}
+
+// Raycast hacia abajo para obtener la altura del suelo caminable en (x, z) desde fromY
 const groundRay = new THREE.Raycaster();
 const RAY_DOWN = new THREE.Vector3(0, -1, 0);
 const _rayOrigin = new THREE.Vector3();
@@ -454,33 +666,81 @@ function sampleGround(x, z, fromY) {
   groundRay.set(_rayOrigin, RAY_DOWN);
   groundRay.far = 400;
   const hits = groundRay.intersectObjects(collisionMeshes, false);
-  return hits.length ? hits[0].point.y : -999;
+  for (const h of hits) {
+    if (!h.face || Math.abs(h.face.normal.y) > 0.42) {
+      return h.point.y;
+    }
+  }
+  return -999;
 }
 
 // Tubería de inicio (punto de aparición original de Mario 64 en los jardines)
 const startWarpPipe = createWarpPipe(CASTLE_SPAWN.x, CASTLE_SPAWN.y, CASTLE_SPAWN.z);
 /* ==========================================================================
-   6. COLECCIONABLES (Bitcoins y La Estrella)
+   6. COLECCIONABLES (Bitcoins con Símbolo ₿ en Relieve)
    ========================================================================== */
 const coins = [];
 let collectedCoins = 0;
 
+function createBitcoinFaceTexture() {
+  const c = document.createElement('canvas');
+  c.width = 256;
+  c.height = 256;
+  const ctx = c.getContext('2d');
+  const grad = ctx.createRadialGradient(96, 84, 14, 128, 128, 124);
+  grad.addColorStop(0, '#fef08a');
+  grad.addColorStop(0.45, '#f59e0b');
+  grad.addColorStop(1, '#b45309');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(128, 128, 124, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = '#fde047';
+  ctx.lineWidth = 10;
+  ctx.beginPath();
+  ctx.arc(128, 128, 106, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.fillStyle = '#78350f';
+  ctx.font = 'bold 142px Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('₿', 132, 136);
+
+  ctx.fillStyle = '#fef9c3';
+  ctx.fillText('₿', 127, 131);
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+const bitcoinFaceTex = createBitcoinFaceTexture();
+
 function createBitcoin(x, y, z) {
   const coinGroup = new THREE.Group();
-  const discGeom = new THREE.CylinderGeometry(0.75, 0.75, 0.15, 24);
-  const discMat = new THREE.MeshStandardMaterial({
+  const edgeMat = new THREE.MeshStandardMaterial({
     color: 0xf59e0b,
     metalness: 0.85,
-    roughness: 0.25,
-    emissive: 0x78350f
+    roughness: 0.22,
+    emissive: 0x78350f,
+    emissiveIntensity: 0.35
   });
-  const disc = new THREE.Mesh(discGeom, discMat);
+  const faceMat = new THREE.MeshStandardMaterial({
+    map: bitcoinFaceTex,
+    metalness: 0.65,
+    roughness: 0.28,
+    emissive: 0x78350f,
+    emissiveIntensity: 0.25
+  });
+  const discGeom = new THREE.CylinderGeometry(0.68, 0.68, 0.14, 28);
+  const disc = new THREE.Mesh(discGeom, [edgeMat, faceMat, faceMat]);
   disc.rotation.x = Math.PI / 2;
   disc.castShadow = true;
   coinGroup.add(disc);
 
-  const rimGeom = new THREE.TorusGeometry(0.75, 0.06, 12, 32);
-  const rim = new THREE.Mesh(rimGeom, discMat);
+  const rimGeom = new THREE.TorusGeometry(0.68, 0.055, 12, 32);
+  const rim = new THREE.Mesh(rimGeom, edgeMat);
   coinGroup.add(rim);
 
   coinGroup.position.set(x, y, z);
@@ -489,15 +749,19 @@ function createBitcoin(x, y, z) {
   coins.push(coinGroup);
 }
 
-// Bitcoins a lo largo del camino hacia el castillo (altura tomada del suelo real)
+// 10 Bitcoins guiando desde la tubería verde, subiendo la colina y cruzando el puente hasta las puertas del castillo
 const COIN_PATH = [
-  [-13.3, 38], [-10.5, 29], [-7, 21], [-3.5, 13], [0, 6],
-  [0, 0.8], [0, -5], [0, -10.5], [0, -15.5]
+  [-13.0, 38.0], [-10.8, 30.0], [-8.0, 22.0], [-4.5, 14.0], [-1.5, 6.5],
+  [0.0, 0.5], [0.0, -6.0], [0.0, -12.5], [0.0, -19.0], [0.0, -25.5]
 ];
 function placeBitcoinsOnPath() {
+  const totalEl = document.getElementById('coin-total');
+  const finalTotalEl = document.getElementById('final-coins-total');
+  if (totalEl) totalEl.innerText = COIN_PATH.length;
+  if (finalTotalEl) finalTotalEl.innerText = COIN_PATH.length;
   COIN_PATH.forEach(([x, z]) => {
-    const gy = sampleGround(x, z, 20);
-    if (gy > -900) createBitcoin(x, gy + 1.2, z);
+    const gy = sampleGround(x, z, 10.2);
+    if (gy > -900) createBitcoin(x, gy + 1.15, z);
   });
 }
 
@@ -556,10 +820,30 @@ const SCENE_3_FILESELECT = 3;
 const SCENE_4_LETTER = 4;
 const SCENE_5_CINEMATIC = 5;
 const SCENE_6_GAMEPLAY = 6;
+const SCENE_DOOR_OPENING = 65;
 const SCENE_VICTORY = 7;
 
 let currentScene = SCENE_1_TITLE;
 let scene2EnterTime = 0;
+let gameplayStartTime = 0;
+let doorAnimElapsed = 0;
+
+// Audio auténtico renderizado desde la ROM original de Super Mario 64 del usuario
+const bgmCastleGrounds = new Audio('assets/audio/sm64/castle_grounds_bgm.mp3');
+bgmCastleGrounds.loop = true;
+bgmCastleGrounds.volume = 0.42;
+
+const sfxCoin = new Audio('assets/audio/sm64/coin.mp3');
+sfxCoin.volume = 0.65;
+
+const sfxDoorOpen = new Audio('assets/audio/sm64/door_open.mp3');
+sfxDoorOpen.volume = 0.80;
+
+const sfxHereWeGo = new Audio('assets/audio/sm64/mario_0C.mp3');
+sfxHereWeGo.volume = 0.85;
+
+const sfxStarFanfare = new Audio('assets/audio/sm64/star_fanfare.mp3');
+sfxStarFanfare.volume = 0.72;
 
 const headBgMosaic = document.getElementById('head-bg-mosaic');
 const scene1Title = document.getElementById('scene-1-title');
@@ -579,10 +863,14 @@ const btnSkipCinematic = document.getElementById('btn-skip-cinematic');
 
 const hud = document.getElementById('hud');
 const controlsHint = document.getElementById('controls-hint');
+const signDialogEl = document.getElementById('sign-dialog');
+const signDialogTitleEl = signDialogEl ? signDialogEl.querySelector('.sign-dialog-title') : null;
+const signDialogTextEl = document.getElementById('sign-dialog-text');
 const victoryModal = document.getElementById('victory-modal');
 const btnRestart = document.getElementById('btn-restart');
 const coinCountEl = document.getElementById('coin-count');
 const finalCoinsEl = document.getElementById('final-coins');
+const finalTimeEl = document.getElementById('final-time');
 
 // Transición: Escena 1 -> Escena 2 (Cabeza 3D)
 function goToScene2() {
@@ -668,9 +956,13 @@ function goToSceneGameplay() {
   if (cinematicVideo) cinematicVideo.pause();
 
   audio.init();
-  audio.playLetsGoChime();
+  sfxHereWeGo.currentTime = 0;
+  sfxHereWeGo.play().catch(() => audio.playLetsGoChime());
+  bgmCastleGrounds.currentTime = 0;
+  bgmCastleGrounds.play().catch(() => {});
 
   currentScene = SCENE_6_GAMEPLAY;
+  gameplayStartTime = performance.now();
   scene.background = new THREE.Color(0x7dd3fc); // Fondo cielo diurno de pradera
   sceneLetter.classList.add('hidden');
   sceneCinematic.classList.add('hidden');
@@ -891,10 +1183,17 @@ const wallRay = new THREE.Raycaster();
 const _wallDir = new THREE.Vector3();
 const _wallOrigin = new THREE.Vector3();
 
-// Devuelve true si hay una pared (normal casi horizontal) en la dirección dada
+// Devuelve true si hay una pared o tronco de árbol en la dirección dada
 function wallAhead(dx, dz) {
   const len = Math.hypot(dx, dz);
   if (len < 1e-6) return false;
+  const nx = player.position.x + dx;
+  const nz = player.position.z + dz;
+  for (const tr of treeTrunks) {
+    if (Math.abs(player.position.y - tr.y) < 6.5 && Math.hypot(nx - tr.x, nz - tr.z) < tr.r + PLAYER_RADIUS) {
+      return true;
+    }
+  }
   _wallDir.set(dx / len, 0, dz / len);
   for (const h of [STEP_HEIGHT + 0.1, 1.4]) {
     _wallOrigin.set(player.position.x, player.position.y + h, player.position.z);
@@ -919,24 +1218,52 @@ function moveWithCollision(dx, dz) {
 
 function respawnPlayer() {
   // Aparece junto a la tubería, mirando hacia el castillo (como en el juego original)
-  player.position.set(CASTLE_SPAWN.x, CASTLE_SPAWN.y + 0.2, CASTLE_SPAWN.z - 3.2);
+  const dbgPos = new URLSearchParams(window.location.search).get('pos');
+  if (dbgPos) {
+    const [px, py, pz] = dbgPos.split(',').map(Number);
+    player.position.set(px, py, pz);
+  } else {
+    player.position.set(CASTLE_SPAWN.x, CASTLE_SPAWN.y + 0.2, CASTLE_SPAWN.z - 3.2);
+  }
   player.rotation.y = Math.PI;
   velocityY = 0;
   isGrounded = false;
   cameraAngle = 0;
 }
 
-// Voces originales de SM64 (extraídas de la ROM propia del usuario, uso local)
-const jumpVoices = ['assets/audio/sm64/mario_03.mp3', 'assets/audio/sm64/mario_04.mp3'].map((src) => {
+// Voces originales de salto de SM64 (Wah!, Hoo!, Yah!, Hoo-hoo!, Yahoo!)
+const jumpVoices = [
+  'assets/audio/sm64/mario_yah.mp3',
+  'assets/audio/sm64/mario_01.mp3',
+  'assets/audio/sm64/mario_00.mp3',
+  'assets/audio/sm64/mario_hoohoo.mp3',
+  'assets/audio/sm64/mario_04.mp3'
+].map((src) => {
   const a = new Audio(src);
-  a.volume = 0.7;
+  a.volume = 0.72;
   return a;
 });
 let jumpVoiceIdx = 0;
 function playMarioVoice() {
+  if (bgmCastleGrounds.paused && currentScene === SCENE_6_GAMEPLAY) {
+    bgmCastleGrounds.play().catch(() => {});
+  }
   const a = jumpVoices[jumpVoiceIdx++ % jumpVoices.length];
   a.currentTime = 0;
   a.play().catch(() => audio.playJump());
+}
+
+function playCoinSound() {
+  const c = sfxCoin.cloneNode();
+  c.volume = 0.65;
+  c.play().catch(() => audio.playCoin());
+}
+
+function formatElapsedTime(ms) {
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
+  const mins = String(Math.floor(totalSec / 60)).padStart(2, '0');
+  const secs = String(totalSec % 60).padStart(2, '0');
+  return `${mins}:${secs}`;
 }
 
 function animateLimbs(swing) {
@@ -949,7 +1276,61 @@ function animateLimbs(swing) {
   l.ArmR.rotation.z = THREE.MathUtils.lerp(l.ArmR.rotation.z, swing * 0.8 * k, 0.4);
 }
 
+function updateSignpostDialog() {
+  if (!signDialogEl || currentScene !== SCENE_6_GAMEPLAY) {
+    if (signDialogEl) signDialogEl.classList.add('hidden');
+    return;
+  }
+  let nearest = null;
+  let bestDist = 3.8;
+  for (const s of signposts) {
+    const d = Math.hypot(player.position.x - s.x, player.position.z - s.z);
+    if (d < bestDist && Math.abs(player.position.y - s.y) < 2.8) {
+      bestDist = d;
+      nearest = s;
+    }
+  }
+  if (nearest) {
+    if (signDialogTitleEl) signDialogTitleEl.innerText = nearest.title;
+    if (signDialogTextEl) signDialogTextEl.innerText = nearest.text;
+    signDialogEl.classList.remove('hidden');
+  } else {
+    signDialogEl.classList.add('hidden');
+  }
+}
+
 function updatePhysics(delta) {
+  if (currentScene === SCENE_DOOR_OPENING) {
+    doorAnimElapsed += delta;
+    const openT = Math.min(1, doorAnimElapsed / 1.15);
+    const eased = 1 - Math.pow(1 - openT, 3);
+    // Las dos hojas estelares se abren hacia el pórtico (+Z) como en Super Mario 64
+    doorLeftPivot.rotation.y = -eased * 1.62;
+    doorRightPivot.rotation.y = eased * 1.62;
+
+    if (doorAnimElapsed < 0.45) {
+      player.position.x = THREE.MathUtils.lerp(player.position.x, 0, 8 * delta);
+      player.position.z = THREE.MathUtils.lerp(player.position.z, -29.2, 6 * delta);
+      player.rotation.y = Math.PI;
+      animateLimbs(0);
+    } else {
+      player.position.x = THREE.MathUtils.lerp(player.position.x, 0, 10 * delta);
+      player.position.z = THREE.MathUtils.lerp(player.position.z, -31.85, 2.4 * delta);
+      player.rotation.y = Math.PI;
+      walkCycle += delta * 11;
+      animateLimbs(Math.sin(walkCycle) * 0.85);
+      if (player.userData.blenderModel) {
+        player.userData.blenderModel.position.y = Math.abs(Math.sin(walkCycle * 2)) * 0.1;
+      }
+    }
+    player.userData.dropShadow.position.set(player.position.x, 8.06, player.position.z);
+
+    if (doorAnimElapsed >= 1.75) {
+      triggerVictory();
+    }
+    return;
+  }
+
   if (currentScene !== SCENE_6_GAMEPLAY) return;
 
   let moveX = 0;
@@ -963,6 +1344,9 @@ function updatePhysics(delta) {
   const isMoving = moveX !== 0 || moveZ !== 0;
 
   if (isMoving) {
+    if (bgmCastleGrounds.paused) {
+      bgmCastleGrounds.play().catch(() => {});
+    }
     const moveVector = new THREE.Vector3(moveX, 0, moveZ).normalize();
     moveVector.applyAxisAngle(new THREE.Vector3(0, 1, 0), cameraAngle);
 
@@ -1019,45 +1403,59 @@ function updatePhysics(delta) {
   const shadowScale = Math.max(0.2, 1 - (player.position.y - currentGroundY) * 0.1);
   player.userData.dropShadow.scale.set(shadowScale, shadowScale, 1);
 
+  updateSignpostDialog();
+
   // Recolección de Bitcoins
   coins.forEach((coin) => {
     if (!coin.userData.active) return;
     const dist = player.position.distanceTo(coin.position);
-    if (dist < 1.4) {
+    if (dist < 1.45) {
       coin.userData.active = false;
       scene.remove(coin);
       collectedCoins++;
       coinCountEl.innerText = collectedCoins;
-      audio.playCoin();
+      playCoinSound();
     }
   });
 
-  // Fin del juego: Bukele cruza la puerta del castillo
+  // Llegada a las Puertas Dobles Estelares de Peach's Castle (Z = -31.55, Y = 8.03)
   if (castleLoaded && currentScene === SCENE_6_GAMEPLAY &&
-      Math.abs(player.position.x) < 4.5 && player.position.z < -1.2 && player.position.z > -8 &&
-      player.position.y > 4.5) {
-    triggerVictory();
-  }
-
-  // Contacto con la Estrella (desactivada)
-  if (star.userData.active) {
-    const distToStar = player.position.distanceTo(star.position);
-    if (distToStar < 2.0) {
-      triggerVictory();
-    }
+      Math.abs(player.position.x) < 2.25 && player.position.z < -28.8 && player.position.z > -32.2 &&
+      player.position.y > 7.2) {
+    startDoorOpeningSequence();
   }
 }
 
+function startDoorOpeningSequence() {
+  if (currentScene !== SCENE_6_GAMEPLAY) return;
+  currentScene = SCENE_DOOR_OPENING;
+  doorAnimElapsed = 0;
+  if (signDialogEl) signDialogEl.classList.add('hidden');
+  controlsHint.classList.add('hidden');
+  bgmCastleGrounds.pause();
+
+  sfxDoorOpen.currentTime = 0;
+  sfxDoorOpen.play().catch(() => {});
+}
+
 function triggerVictory() {
+  if (currentScene === SCENE_VICTORY) return;
   currentScene = SCENE_VICTORY;
   star.userData.active = false;
-  audio.playVictory();
+  bgmCastleGrounds.pause();
 
-  player.rotation.y = cameraAngle + Math.PI;
+  sfxHereWeGo.currentTime = 0;
+  sfxHereWeGo.play().catch(() => {});
+  sfxStarFanfare.currentTime = 0;
+  sfxStarFanfare.play().catch(() => audio.playVictory());
+
+  animateLimbs(0);
+  const elapsedMs = gameplayStartTime > 0 ? (performance.now() - gameplayStartTime) : 0;
   finalCoinsEl.innerText = collectedCoins;
+  if (finalTimeEl) finalTimeEl.innerText = formatElapsedTime(elapsedMs);
   setTimeout(() => {
     victoryModal.classList.add('active');
-  }, 900);
+  }, 850);
 }
 
 function updateCamera(delta) {
@@ -1099,19 +1497,27 @@ function updateCamera(delta) {
     return;
   }
 
-  // Escena 6: Cámara de Gameplay en 3ª persona
-  const cameraDistance = currentScene === SCENE_VICTORY ? 5.5 : 8.5;
-  const cameraHeight = currentScene === SCENE_VICTORY ? 2.5 : 4.0;
+  // Cámara cinemática frente al pórtico real al abrir las puertas del castillo
+  if (currentScene === SCENE_DOOR_OPENING || currentScene === SCENE_VICTORY) {
+    camera.position.x = THREE.MathUtils.lerp(camera.position.x, 0, 6 * delta);
+    camera.position.y = THREE.MathUtils.lerp(camera.position.y, 10.1, 6 * delta);
+    camera.position.z = THREE.MathUtils.lerp(camera.position.z, -23.2, 6 * delta);
+    camera.lookAt(0, 9.3, -31.55);
+  } else {
+    // Escena 6: Cámara de Gameplay en 3ª persona
+    const cameraDistance = 8.5;
+    const cameraHeight = 4.0;
 
-  const targetX = player.position.x + Math.sin(cameraAngle) * cameraDistance;
-  const targetZ = player.position.z + Math.cos(cameraAngle) * cameraDistance;
-  const targetY = player.position.y + cameraHeight;
+    const targetX = player.position.x + Math.sin(cameraAngle) * cameraDistance;
+    const targetZ = player.position.z + Math.cos(cameraAngle) * cameraDistance;
+    const targetY = player.position.y + cameraHeight;
 
-  camera.position.x = THREE.MathUtils.lerp(camera.position.x, targetX, 8 * delta);
-  camera.position.y = THREE.MathUtils.lerp(camera.position.y, targetY, 8 * delta);
-  camera.position.z = THREE.MathUtils.lerp(camera.position.z, targetZ, 8 * delta);
+    camera.position.x = THREE.MathUtils.lerp(camera.position.x, targetX, 8 * delta);
+    camera.position.y = THREE.MathUtils.lerp(camera.position.y, targetY, 8 * delta);
+    camera.position.z = THREE.MathUtils.lerp(camera.position.z, targetZ, 8 * delta);
 
-  camera.lookAt(player.position.x, player.position.y + 1.5, player.position.z);
+    camera.lookAt(player.position.x, player.position.y + 1.5, player.position.z);
+  }
 
   // Cámara de depuración para capturas: ?cam=x,y,z,tx,ty,tz
   const dbg = new URLSearchParams(window.location.search).get('cam');
@@ -1125,24 +1531,45 @@ function updateCamera(delta) {
 function animate() {
   requestAnimationFrame(animate);
   const delta = Math.min(clock.getDelta(), 0.1);
+  const t = clock.elapsedTime;
 
   if (currentScene >= SCENE_6_GAMEPLAY) {
     coins.forEach((coin) => {
       if (coin.userData.active) {
         coin.rotation.y += delta * 2.5;
-        coin.position.y = coin.userData.baseY + Math.sin(clock.elapsedTime * 3) * 0.15;
+        coin.position.y = coin.userData.baseY + Math.sin(t * 3) * 0.15;
       }
     });
 
-    if (star.userData.active) {
-      star.rotation.y += delta * 2.0;
-      star.position.y = star.userData.baseY + Math.sin(clock.elapsedTime * 2.5) * 0.25;
-    }
+    // Animación continua de cascada, agua del foso y banderas de las torres
+    waterfallTex.offset.y -= delta * 1.35;
+    moatWater.tex.offset.x += delta * 0.06;
+    moatWater.tex.offset.y += delta * 0.04;
+    lakeWater.tex.offset.x -= delta * 0.05;
 
+    castleFlags.forEach((cloth) => {
+      const posAttr = cloth.geometry.attributes.position;
+      const base = cloth.userData.basePos;
+      const ph = cloth.userData.phase;
+      for (let i = 0; i < posAttr.count; i++) {
+        const bx = base[i * 3];
+        const amp = (bx / 3.6) * 0.42;
+        posAttr.array[i * 3 + 2] = Math.sin(t * 5.2 - bx * 1.6 + ph) * amp;
+      }
+      posAttr.needsUpdate = true;
+    });
   }
 
   updatePhysics(delta);
   updateCamera(delta);
+
+  // Billboard en eje Y para los 26 árboles oficiales (fiel a GEO_BILLBOARD de SM64)
+  if (currentScene >= SCENE_6_GAMEPLAY) {
+    for (const tg of castleTrees) {
+      tg.rotation.y = Math.atan2(camera.position.x - tg.position.x, camera.position.z - tg.position.z);
+    }
+  }
+
   if (skyDome.visible) skyDome.position.set(camera.position.x, camera.position.y + 6, camera.position.z);
 
   renderer.render(scene, camera);

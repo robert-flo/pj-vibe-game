@@ -2,21 +2,17 @@
 
 | Asset ID | Type | Source | Target Ref | Status | Notes |
 |---|---|---|---|---|---|
-| `hero_bukele` | 3D Character (GLB) | Blender Python Headless | `ref-02`, `ref-04` | final | Ceremonial coat, sash, collar & cuff embroidery, rig |
-| `hero_bukele_head` | 3D Character Bust (GLB) | Tripo3D AI + Blender Pipeline | `ref-05`, `ref-07` | final | High-fidelity 3D PBR bust of Nayib Bukele (Tripo AI model optimized and retargeted in Blender 5.2 LTS, 35k polys, PBR textures, 12 MB) |
-| `title_logo_super` | 3D Typographic Block | Procedural DOM/CSS 3D | `ref-01` | final | Multi-color isometric wooden blocks |
-| `title_logo_bukele` | 3D Typographic Block | Procedural DOM/CSS 3D | `ref-01` | final | Primary color blocks with wooden extrusion |
-| `title_logo_64` | 3D Numeric Block | Procedural DOM/CSS 3D | `ref-01` | final | Tilted 3D red/gold extrusion |
-| `title_copyright` | CRT Cyan Typography | Styled Text | `ref-01` | final | `©2026 Kodigo Academy` with cyan glow |
-| `prop_bitcoin` | 3D Collectable | Three.js Mesh / Shader | n/a | final | Golden cylinder with Bitcoin engraving and glow |
-| `prop_star` | 3D Goal Mesh | Extruded 5-point Star | `ref-01` | final | Golden star with point light and particle bob |
-| `env_meadow_ground` | 3D Terrain | Procedural Cylinder | `ref-01` | final | Vibrant grass cylinder with receiveShadow |
-| `env_mountain_hill` | 3D Terrain | Multi-tier stepped hill | `ref-01` | final | 3-tiered slope with ramp paths |
-| `env_platforms` | 3D Platforms | Floating brick steps | `ref-01` | final | Yellow/orange stone platforms |
-| `env_trees` | 3D Props | Low-poly pine cones | `ref-01` | final | Brown trunk with layered green cones |
-| `prop_warp_pipe` | 3D Prop | Procedural Three.js Mesh | `ref-01` | final | Classic N64 green pipe with sandy rim at player spawn |
-| `env_castle_grounds` | 3D Environment | 3D Mesh with RENDER96-HD textures | `ref-01-castle-wide` | in-progress | Authentic Peach's Castle exterior with moat, stone bridge and facade |
-| `prop_castle_doors` | 3D Interactable | 3D Animated Door Mesh | `ref-01` | in-progress | Double castle entrance doors that swing open upon approach |
-| `hero_bukele_gameplay` | 3D Character (GLB) | Blender Pipeline (`Desktop/assets2`) | `Desktop/assets2` | in-progress | Formal dark navy suit with black t-shirt and trimmed beard |
-| `audio_castle_grounds_bgm` | Audio Track | Remastered SM64 Castle Grounds BGM | `ref-01` | in-progress | Joyous orchestral outdoor theme |
-| `audio_sfx_retro` | Audio Engine | Web Audio API Synthesizer | `ref-01` | final | Jump, coin, victory, and start chime oscillators |
+| `hero_bukele_head` | 3D Character Bust (GLB) | Tripo3D + Blender Pipeline | `ref-05`, `ref-07` | final | High-fidelity 3D PBR bust of Nayib Bukele (`assets/models/bukele_head.glb`, 12 MB) |
+| `hero_bukele_gameplay` | 3D Character (GLB) | Blender Pipeline (`scripts/build_bukele_hero.py`) + Shader Neck Crop | `Desktop/assets2` | final | Formal dark navy blazer, black tee, dark navy pants, brown shoes, articulated `ArmL`/`ArmR`/`LegL`/`LegR` (`assets/models/bukele_body.glb`, 181 KB) + real head |
+| `title_logo_super_bukele_64` | 3D Typographic Block | Blender Render (`assets/img/super_bukele_64_logo.png`) | `ref-01` | final | Classic N64 multi-color extruded logo |
+| `prop_warp_pipe` | 3D Prop | Procedural Three.js Mesh | `ref-01-castle-wide` | final | Green N64 warp pipe with sand base at exact SM64 intro spawn `(-13.28, 2.60, 46.64)` |
+| `env_castle_grounds` | 3D Level (GLB) | Extracted from `Render96ex/levels/castle_grounds/areas/1/{1..10}` + `RENDER96-HD-TEXTURE-PACK` | `ref-01-castle-wide`, `ref-03-bridge-env` | final | Complete Peach's Castle Grounds geometry with central spire, moat/cannon grills, N64 vertex lighting, and 27 HD textures (`assets/models/castle_grounds.glb`, 3.0 MB) |
+| `env_ocean_sky_water` | Skybox & Water | `ocean_sky.jpg` + `water.png` + `movtext.inc.c` Waterfall | `ref-01-castle-wide` | final | Authentic ocean sky dome, animated moat/lake water boxes, and scrolling cliff waterfall |
+| `env_bubbly_trees` | 3D Y-Billboard Props | `RENDER96-HD-TEXTURE-PACK/gfx/actors/tree/` (26 instances) | `ref-01-castle-wide`, `ref-02-grounds-action` | final | All 26 exact `special_bubble_tree` placements from `collision.inc.c` with trunk collision |
+| `env_castle_flags` | 3D Animated Props | Procedural Ribbon + Pole at `script.c` tower coords | `ref-01-castle-wide` | final | 4 waving red tower flags (`bhvCastleFlagWaving`) |
+| `prop_castle_doors` | 3D Animated Actor (GLB) | `Render96ex/actors/door/` + `RENDER96-HD` (`scripts/export_castle_actors.py`) | `ref-01-castle-wide`, `ref-03-bridge-env` | final | Double wooden Star-emblem doors (`assets/models/castle_door.glb`) at `(-1.53/+1.54, 8.03, -31.55)` with outward porch opening animation |
+| `prop_wooden_signpost` | 3D Interactive Actor (GLB) | `Render96ex/actors/wooden_signpost/` + `RENDER96-HD` | `ref-02-grounds-action` | final | Classic wooden signposts (`assets/models/wooden_signpost.glb`) with proximity N64 comical dialogue banners |
+| `prop_bitcoin` | 3D Collectable | Three.js Cylinder + Torus + Procedural `₿` Emblem Texture | `ref-02-grounds-action` | final | 10 rotating golden Bitcoins guiding from warp pipe across stone bridge to castle doors |
+| `audio_castle_grounds_bgm` | Music Track (MP3) | Rendered from user US ROM `03_level_grass.m64` + Bank `22` (`scripts/render_sm64_audio.py`) | `ref-01` | final | Authentic 73.7s Koji Kondo outdoor theme (`assets/audio/sm64/castle_grounds_bgm.mp3`) |
+| `audio_star_fanfare` | Victory Fanfare (MP3) | Rendered from user US ROM `01_cutscene_collect_star.m64` + Bank `22` | `ref-01` | final | Authentic 4.96s Star Collect victory fanfare (`assets/audio/sm64/star_fanfare.mp3`) |
+| `audio_sm64_sfx_voices` | SFX & Voices (MP3) | Extracted from user US ROM (`sfx_mario`, `sfx_mario_peach`, `sfx_5`, `sfx_9`) | `ref-01` | final | Jump voices (`Wah!`, `Hoo!`, `Yah!`, `Hoo-hoo!`, `Yahoo!`), `Here we go!`, coin chime (`coin.mp3`), and wooden castle door open (`door_open.mp3`) |

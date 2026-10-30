@@ -235,12 +235,18 @@
   <div id="hud" class="hidden">
     <div class="hud-item coins-counter">
       <span class="coin-icon">₿</span>
-      <span id="coin-count">0</span> / <span id="coin-total">5</span>
+      <span id="coin-count">0</span> / <span id="coin-total">10</span>
     </div>
     <div class="hud-item mission-badge">
       <span class="mission-icon">⭐</span>
       <span>Misión: Cruza el puente y entra al castillo</span>
     </div>
+  </div>
+
+  <!-- Cuadro de diálogo N64 para los carteles de madera -->
+  <div id="sign-dialog" class="sign-dialog hidden">
+    <div class="sign-dialog-title">🪧 Cartel de los Jardines</div>
+    <p id="sign-dialog-text"></p>
   </div>
 
   <div id="controls-hint" class="hidden">
@@ -254,12 +260,13 @@
     <div class="card victory-card">
       <div class="star-animation">⭐</div>
       <h1>¡VICTORIA!</h1>
-      <h2>¡Has conseguido la Estrella!</h2>
+      <h2>¡Has entrado al Castillo Real!</h2>
       <p id="victory-message">
-        ¡El primer sello de Bowser ha sido destruido! La Princesa Gabriela sabe que su rescate está cerca.
+        ¡Nayib Bukele ha cruzado los jardines y abierto las puertas del Castillo! La Primera Dama Gabriela te espera en el gran salón con la sorpresa prometida.
       </p>
       <div class="stats">
-        <p>Bitcoins asegurados: <strong><span id="final-coins">0</span>/5</strong></p>
+        <p>Bitcoins asegurados: <strong><span id="final-coins">0</span> / <span id="final-coins-total">10</span></strong></p>
+        <p>Tiempo de recorrido: <strong><span id="final-time">00:00</span></strong></p>
       </div>
       <button id="btn-restart" class="btn primary-btn">🔄 Jugar de Nuevo</button>
     </div>
