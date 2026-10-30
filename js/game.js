@@ -1452,6 +1452,14 @@ function startDoorOpeningSequence() {
   currentScene = SCENE_DOOR_OPENING;
   doorAnimElapsed = 0;
   doorAnimStartTime = Date.now();
+  const doorTimer = setInterval(() => {
+    if (currentScene !== SCENE_DOOR_OPENING) {
+      clearInterval(doorTimer);
+      return;
+    }
+    updatePhysics(0.05);
+    updateCamera(0.05);
+  }, 50);
   coins.forEach((c) => {
     if (c.userData.active && c.position.z < -21.5) c.visible = false;
   });
