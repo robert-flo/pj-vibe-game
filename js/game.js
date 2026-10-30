@@ -260,24 +260,47 @@ function createBukeleCharacter() {
     blenderModel: null
   };
 
-  // Carga de bukele.glb (modelo ceremonial completo de Blender)
-  gltfLoader.load(
-    'assets/models/bukele.glb',
-    (gltf) => {
-      const bukeleMesh = gltf.scene;
-      bukeleMesh.traverse((child) => {
-        if (child.isMesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
-        }
-      });
-      group.add(bukeleMesh);
-      group.userData.blenderModel = bukeleMesh;
-      console.log('[GLTF] Modelo ceremonial bukele.glb activo.');
-    },
-    undefined,
-    (err) => console.warn('[GLTF Fallback] bukele.glb:', err)
-  );
+  // Héroe jugable (Desktop/assets2): cuerpo en Blender (bukele_body.glb) + cabeza real (bukele_head.glb)
+  const heroPivot = new THREE.Group();   // el modelo mira a +X; se gira para mirar a +Z
+  heroPivot.rotation.y = -Math.PI / 2;
+  const heroRoot = new THREE.Group();
+  heroPivot.add(heroRoot);
+  group.add(heroPivot);
+  group.userData.blenderModel = heroRoot;
+  group.userData.limbs = {};
+
+  gltfLoader.load('assets/models/bukele_body.glb', (gltf) => {
+    gltf.scene.traverse((child) => {
+      if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; }
+      if (['ArmL', 'ArmR', 'LegL', 'LegR'].includes(child.name)) group.userData.limbs[child.name] = child;
+    });
+    heroRoot.add(gltf.scene);
+  }, undefined, (err) => console.warn('[GLTF] bukele_body.glb:', err));
+
+  gltfLoader.load('assets/models/bukele_head.glb', (gltf) => {
+    const head = gltf.scene;
+    head.traverse((child) => {
+      if (!child.isMesh) return;
+      child.castShadow = true;
+      child.material.roughness = 0.6;
+      child.material.metalness = 0;
+      // Recorte del busto (sin hombros/saco): solo cabeza y cuello. Ejes de Three: (x, arriba, z)
+      child.material.onBeforeCompile = (sh) => {
+        sh.vertexShader = sh.vertexShader
+          .replace('#include <common>', '#include <common>\nvarying vec3 vHeadPos;')
+          .replace('#include <begin_vertex>', '#include <begin_vertex>\nvHeadPos = position;');
+        sh.fragmentShader = sh.fragmentShader
+          .replace('#include <common>', '#include <common>\nvarying vec3 vHeadPos;')
+          .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\n' +
+            'if (vHeadPos.y < -0.45 || (vHeadPos.y < -0.30 && (abs(vHeadPos.z) > 0.2 || vHeadPos.x < -0.3))) discard;');
+      };
+      child.material.needsUpdate = true;
+    });
+    const HS = 0.9;
+    head.scale.setScalar(HS);
+    head.position.set(0, 1.62 + 0.30 * HS, 0);
+    heroRoot.add(head);
+  }, undefined, (err) => console.warn('[GLTF] bukele_head.glb (héroe):', err));
 
   return group;
 }
@@ -903,6 +926,29 @@ function respawnPlayer() {
   cameraAngle = 0;
 }
 
+// Voces originales de SM64 (extraídas de la ROM propia del usuario, uso local)
+const jumpVoices = ['assets/audio/sm64/mario_03.mp3', 'assets/audio/sm64/mario_04.mp3'].map((src) => {
+  const a = new Audio(src);
+  a.volume = 0.7;
+  return a;
+});
+let jumpVoiceIdx = 0;
+function playMarioVoice() {
+  const a = jumpVoices[jumpVoiceIdx++ % jumpVoices.length];
+  a.currentTime = 0;
+  a.play().catch(() => audio.playJump());
+}
+
+function animateLimbs(swing) {
+  const l = player.userData.limbs;
+  if (!l || !l.LegL) return;
+  const k = isGrounded ? 1 : 0.2;
+  l.LegL.rotation.z = THREE.MathUtils.lerp(l.LegL.rotation.z, swing * k, 0.4);
+  l.LegR.rotation.z = THREE.MathUtils.lerp(l.LegR.rotation.z, -swing * k, 0.4);
+  l.ArmL.rotation.z = THREE.MathUtils.lerp(l.ArmL.rotation.z, -swing * 0.8 * k, 0.4);
+  l.ArmR.rotation.z = THREE.MathUtils.lerp(l.ArmR.rotation.z, swing * 0.8 * k, 0.4);
+}
+
 function updatePhysics(delta) {
   if (currentScene !== SCENE_6_GAMEPLAY) return;
 
@@ -926,11 +972,13 @@ function updatePhysics(delta) {
     player.rotation.y = THREE.MathUtils.lerp(player.rotation.y, targetRotation, 14 * delta);
 
     walkCycle += delta * 12;
+    animateLimbs(Math.sin(walkCycle) * 0.9);
     if (player.userData.blenderModel) {
       player.userData.blenderModel.position.y = Math.abs(Math.sin(walkCycle * 2)) * 0.12;
       player.userData.blenderModel.rotation.z = Math.sin(walkCycle) * 0.05;
     }
   } else {
+    animateLimbs(0);
     if (player.userData.blenderModel) {
       player.userData.blenderModel.position.y = THREE.MathUtils.lerp(player.userData.blenderModel.position.y, 0, 10 * delta);
       player.userData.blenderModel.rotation.z = THREE.MathUtils.lerp(player.userData.blenderModel.rotation.z, 0, 10 * delta);
@@ -941,7 +989,7 @@ function updatePhysics(delta) {
   if (keys['Space'] && isGrounded) {
     velocityY = JUMP_FORCE;
     isGrounded = false;
-    audio.playJump();
+    playMarioVoice();
   }
 
   velocityY = Math.max(velocityY + GRAVITY * delta, -45);
