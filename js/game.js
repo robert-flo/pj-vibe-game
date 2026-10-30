@@ -717,7 +717,7 @@ function createBitcoinFaceTexture() {
 
   ctx.save();
   ctx.translate(128, 128);
-  ctx.rotate(Math.PI / 2);
+  ctx.rotate(-Math.PI / 2);
   ctx.fillStyle = '#78350f';
   ctx.font = 'bold 142px Arial, sans-serif';
   ctx.textAlign = 'center';
