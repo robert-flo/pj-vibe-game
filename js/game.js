@@ -844,6 +844,7 @@ let currentScene = SCENE_1_TITLE;
 let scene2EnterTime = 0;
 let gameplayStartTime = 0;
 let doorAnimElapsed = 0;
+let doorAnimStartTime = 0;
 
 // Audio auténtico renderizado desde la ROM original de Super Mario 64 del usuario
 const bgmCastleGrounds = new Audio('assets/audio/sm64/castle_grounds_bgm.mp3');
@@ -1319,7 +1320,7 @@ function updateSignpostDialog() {
 
 function updatePhysics(delta) {
   if (currentScene === SCENE_DOOR_OPENING) {
-    doorAnimElapsed += delta;
+    doorAnimElapsed = (performance.now() - doorAnimStartTime) / 1000;
     const openT = Math.min(1, doorAnimElapsed / 1.15);
     const eased = 1 - Math.pow(1 - openT, 3);
     // Las dos hojas estelares se abren hacia el pórtico (+Z) como en Super Mario 64
@@ -1327,18 +1328,20 @@ function updatePhysics(delta) {
     doorRightPivot.rotation.y = eased * 1.62;
 
     if (doorAnimElapsed < 0.45) {
-      player.position.x = THREE.MathUtils.lerp(player.position.x, 0, 8 * delta);
-      player.position.z = THREE.MathUtils.lerp(player.position.z, -29.2, 6 * delta);
+      const standT = Math.min(1, doorAnimElapsed / 0.45);
+      player.position.x = THREE.MathUtils.lerp(player.position.x, 0, standT);
+      player.position.z = THREE.MathUtils.lerp(player.position.z, -29.2, standT);
       player.rotation.y = Math.PI;
       animateLimbs(0);
     } else {
-      player.position.x = THREE.MathUtils.lerp(player.position.x, 0, 10 * delta);
-      player.position.z = THREE.MathUtils.lerp(player.position.z, -31.85, 2.4 * delta);
+      const walkT = Math.min(1, (doorAnimElapsed - 0.45) / 1.30);
+      player.position.x = THREE.MathUtils.lerp(player.position.x, 0, 0.35);
+      player.position.z = THREE.MathUtils.lerp(-29.2, -31.85, walkT);
       player.rotation.y = Math.PI;
-      walkCycle += delta * 11;
-      animateLimbs(Math.sin(walkCycle) * 0.85);
+      const wc = (doorAnimElapsed - 0.45) * 11;
+      animateLimbs(Math.sin(wc) * 0.85);
       if (player.userData.blenderModel) {
-        player.userData.blenderModel.position.y = Math.abs(Math.sin(walkCycle * 2)) * 0.1;
+        player.userData.blenderModel.position.y = Math.abs(Math.sin(wc * 2)) * 0.1;
       }
     }
     player.userData.dropShadow.position.set(player.position.x, 8.06, player.position.z);
@@ -1448,6 +1451,10 @@ function startDoorOpeningSequence() {
   if (currentScene !== SCENE_6_GAMEPLAY || !castleLoaded) return;
   currentScene = SCENE_DOOR_OPENING;
   doorAnimElapsed = 0;
+  doorAnimStartTime = performance.now();
+  coins.forEach((c) => {
+    if (c.userData.active && c.position.z < -21.5) c.visible = false;
+  });
   if (signDialogEl) signDialogEl.classList.add('hidden');
   controlsHint.classList.add('hidden');
   bgmCastleGrounds.pause();
@@ -1517,9 +1524,10 @@ function updateCamera(delta) {
 
   // Cámara cinemática frente al pórtico real al abrir las puertas del castillo
   if (currentScene === SCENE_DOOR_OPENING || currentScene === SCENE_VICTORY) {
-    camera.position.x = THREE.MathUtils.lerp(camera.position.x, 0, 6 * delta);
-    camera.position.y = THREE.MathUtils.lerp(camera.position.y, 10.1, 6 * delta);
-    camera.position.z = THREE.MathUtils.lerp(camera.position.z, -23.2, 6 * delta);
+    const camAlpha = Math.min(1, Math.max(6 * delta, 0.35));
+    camera.position.x = THREE.MathUtils.lerp(camera.position.x, 0, camAlpha);
+    camera.position.y = THREE.MathUtils.lerp(camera.position.y, 10.1, camAlpha);
+    camera.position.z = THREE.MathUtils.lerp(camera.position.z, -23.2, camAlpha);
     camera.lookAt(0, 9.3, -31.55);
   } else {
     // Escena 6: Cámara de Gameplay en 3ª persona
