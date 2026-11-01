@@ -2,19 +2,33 @@
 
 > **Propósito**: Bitácora viva en la raíz de `pj-vibe-game` para registrar el estado exacto del proyecto, entregables oficiales, cambios completados y enlaces de entrega académica.
 
-**Última actualización**: 2026-11-01 11:00 (UTC-6)  
+**Última actualización**: 2026-11-01 11:25 (UTC-6)  
 **Actividad**: Semana 2 — Vibecoding Guiado (AI FOR DEVS JR. 5 - Kodigo Academy)  
 **Estudiante**: Roberto Carlos Flores Quintanilla  
 **Instructor**: Ing. Ronald Mejia  
 **Repositorio principal**: `/home/omarchy/Projects/pj-vibe-game` ([Enlace GitHub](https://github.com/robert-flo/pj-vibe-game) | [Despliegue GitHub Pages](https://robert-flo.github.io/pj-vibe-game/))  
 **Repositorio de documentación**: `/home/omarchy/Projects/pj-vibe-game-docs` ([Enlace GitHub](https://github.com/robert-flo/pj-vibe-game-docs) | [Sitio Jekyll en Vivo](https://robert-flo.github.io/pj-vibe-game-docs/))  
-**PDF Oficial de Entrega**: `/home/omarchy/Desktop/RobertoFlores-Tarea02.pdf` (Documento A4 con portada institucional Kodigo, resumen ejecutivo, tabla de prompts, galería visual, matriz de incidencias resueltas y rúbrica).
+**PDF Oficial de Entrega**: `/home/omarchy/Desktop/RobertoFlores-Tarea02.pdf` (Documento A4 con portada institucional Kodigo, resumen ejecutivo, bitácora de prompts, galería visual, matriz de incidencias resueltas y rúbrica).
 
 ---
 
 ## 1. ¿Qué está completado y publicado (`origin/main`)?
 
-1. **Vitral de Peach Corregido y Sistema de Vitral Personalizable**:
+1. **Corrección de la Pantalla SELECT FILE (Escena 3 - Desbloqueo y Debounce Guard)**:
+   - Diagnóstico: Al pulsar "PRESS START" en la Escena 2, el evento `pointerdown` transicionaba a la Escena 3 pero el subsecuente evento `mousedown`/`click` en el mismo ciclo era capturado por el listener global de ventana, saltándose la pantalla en 0 ms directo a la Carta de Gabriela.
+   - Solución: Se implementó un guardián de tiempo (`scene3EnterTime = performance.now()`) con una ventana de protección de 450 ms que absorbe cualquier clic residual. La pantalla dorada SELECT FILE ahora permanece activa y permite interactuar con el cursor de mano 3D sobre los slots `BUKELE A, B, C, D`.
+
+2. **Vitral Oficial de Gabriela de Bukele en el Castillo**:
+   - Integración del retrato oficial de la Primera Dama Gabriela de Bukele (`images.jpeg`) adaptado al marco ovalado del castillo (`stained_glass_gabriela.png`).
+   - Composición con bisel dorado de plomo, bandera nacional de El Salvador y transparencia en el arco exterior superior para integrarse perfectamente a la mampostería 3D del castillo.
+
+3. **Banda Sonora Oficial Completa (OST Original SM64)**:
+   - Integradas las pistas oficiales del usuario desde `~/Desktop/assets4`:
+     - Pista `01`: Saludo de inicio clásico *"It's-a Me, Mario!"* al arrancar el juego.
+     - Pista `02`: Tema principal de alta fidelidad *Title Theme* (3:34 min) para Escenas 1 y 2.
+     - Pista `03`: Tema oficial de selección *File Select* (46 s) para la Escena 3.
+
+4. **Vitral de Peach Corregido y Sistema de Vitral Personalizable**:
    - Diagnóstico de UVs: `castle_grounds_seg7_texture_07001000` (`1.rgba16.png`) tenía dimensiones `(32, 64)` invertidas en `scripts/export_castle_grounds.py` en lugar de `(64, 32)`, lo que causaba que la mitad inferior de Peach se dividiera verticalmente y se duplicara a los lados.
    - Corregida la relación de aspecto en el exportador y re-exportado `assets/models/castle_grounds.glb` con Blender 5.2.2. Vitral ovalado de Peach ahora completamente continuo, unificado y en alta definición.
    - Sistema de personalización dinámica habilitado en `js/game.js`: permite cambiar el vitral por cualquier imagen personalizada mediante el parámetro URL `?glass=ruta/imagen.png` o mediante la función de consola `window.setCastleStainedGlass(url)`.

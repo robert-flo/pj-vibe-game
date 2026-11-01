@@ -425,17 +425,23 @@ gltfLoader.load(
     castle.updateMatrixWorld(true);
     castleLoaded = true;
 
-    // Vitral personalizable del castillo (Peach original por defecto, o personalizable con imagen propia)
+    // Vitral personalizable del castillo (Retrato de Gabriela de Bukele por defecto, o sobreescritura con ?glass=)
     const customGlassParam = new URLSearchParams(window.location.search).get('glass');
-    const glassTex = customGlassParam ? new THREE.TextureLoader().load(customGlassParam) : null;
-    if (glassTex) glassTex.colorSpace = THREE.SRGBColorSpace;
+    const activeGlassUrl = customGlassParam || 'assets/textures/castle_grounds/stained_glass_gabriela.png';
+    const glassTex = new THREE.TextureLoader().load(activeGlassUrl);
+    glassTex.colorSpace = THREE.SRGBColorSpace;
+    glassTex.anisotropy = 8;
 
     const glassOverlay = new THREE.Mesh(
       new THREE.PlaneGeometry(8.04, 8.05),
       new THREE.MeshBasicMaterial({
         map: glassTex,
         side: THREE.DoubleSide,
-        visible: !!customGlassParam
+        transparent: true,
+        alphaTest: 0.15,
+        polygonOffset: true,
+        polygonOffsetFactor: -1,
+        visible: true
       })
     );
     glassOverlay.position.set(0, 26.035, -20.36);
@@ -443,7 +449,9 @@ gltfLoader.load(
 
     window.setCastleStainedGlass = function(urlOrPath) {
       if (!urlOrPath) {
-        glassOverlay.visible = false;
+        glassOverlay.material.map = glassTex;
+        glassOverlay.material.needsUpdate = true;
+        glassOverlay.visible = true;
         return;
       }
       const newTex = new THREE.TextureLoader().load(urlOrPath);
@@ -875,11 +883,15 @@ const SCENE_VICTORY = 7;
 
 let currentScene = SCENE_1_TITLE;
 let scene2EnterTime = 0;
+let scene3EnterTime = 0;
 let gameplayStartTime = 0;
 let doorAnimElapsed = 0;
 let doorAnimStartTime = 0;
 
-// Audio auténtico renderizado desde la ROM original de Super Mario 64 del usuario
+// Audio auténtico renderizado desde la ROM original y pistas oficiales OST del usuario
+const sfxMarioIntro = new Audio('assets/audio/sm64/mario_intro_voice.mp3');
+sfxMarioIntro.volume = 0.88;
+
 const bgmTitleScreen = new Audio('assets/audio/sm64/title_screen_bgm.mp3');
 bgmTitleScreen.loop = true;
 bgmTitleScreen.volume = 0.50;
@@ -957,6 +969,8 @@ function goToScene2() {
   if (currentScene !== SCENE_1_TITLE) return;
   audio.init();
   audio.playStartChime();
+  sfxMarioIntro.currentTime = 0;
+  sfxMarioIntro.play().catch(() => {});
   playTitleAudio();
 
   currentScene = SCENE_2_HEAD;
@@ -981,6 +995,7 @@ function goToScene3(force = false) {
   bgmFileSelect.play().catch(() => {});
 
   currentScene = SCENE_3_FILESELECT;
+  scene3EnterTime = performance.now();
   headBgMosaic.classList.add('hidden');
   scene2Overlay.classList.add('hidden');
   scene3FileSelect.classList.remove('hidden');
@@ -998,11 +1013,14 @@ function goToScene3(force = false) {
 }
 
 // Transición: Escena 3 -> Escena 4 (La Carta de Gabriela)
-function goToSceneLetter() {
+function goToSceneLetter(force = false) {
   if (currentScene !== SCENE_3_FILESELECT) return;
+  // Protección contra debounce: evitar que el clic residual de salida de la Escena 2 se salte la Escena 3
+  if (!force && performance.now() - scene3EnterTime < 450) return;
 
   audio.init();
-  audio.playStartChime();
+  sfxCoin.currentTime = 0;
+  sfxCoin.play().catch(() => {});
   bgmFileSelect.pause();
 
   currentScene = SCENE_4_LETTER;
@@ -1087,7 +1105,6 @@ btnScene2Start.addEventListener('click', (e) => {
 });
 btnScene2Start.addEventListener('pointerdown', (e) => {
   e.stopPropagation();
-  goToScene3(true);
 });
 
 // En Escena 3, cualquier clic en la pantalla SELECT FILE avanza a la Carta de Gabriela
