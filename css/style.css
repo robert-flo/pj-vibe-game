@@ -910,3 +910,112 @@ body, html {
   .rainbow-char { font-size: 24px; }
   .rainbow-press-start { bottom: 20px; left: 20px; }
 }
+
+/* ==========================================================================
+   CONTROLES TÁCTILES VIRTUALES (MÓVILES / TABLETS)
+   ========================================================================== */
+.touch-controls {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 60;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 24px;
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.touch-controls.hidden {
+  display: none !important;
+}
+
+.touch-dpad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.dpad-mid-row {
+  display: flex;
+  align-items: center;
+}
+
+.dpad-core {
+  width: 44px;
+  height: 44px;
+  background: rgba(15, 23, 42, 0.75);
+}
+
+.touch-btn {
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(8px);
+  color: #f8fafc;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'TypefaceMario64', Arial, sans-serif;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.08s ease, background-color 0.08s ease;
+}
+
+.touch-btn:active, .touch-btn.active {
+  background: rgba(59, 130, 246, 0.85);
+  border-color: #93c5fd;
+  transform: scale(0.92);
+}
+
+.dpad-btn {
+  width: 48px;
+  height: 48px;
+  font-size: 18px;
+}
+
+.dpad-up {
+  border-radius: 12px 12px 0 0;
+}
+
+.dpad-down {
+  border-radius: 0 0 12px 12px;
+}
+
+.dpad-left {
+  border-radius: 12px 0 0 12px;
+}
+
+.dpad-right {
+  border-radius: 0 12px 12px 0;
+}
+
+.touch-actions {
+  pointer-events: auto;
+  touch-action: none;
+  margin-right: 12px;
+  margin-bottom: 8px;
+}
+
+.action-jump-btn {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  font-size: 26px;
+  font-weight: 900;
+  color: #ffffff;
+  background: radial-gradient(circle at 35% 35%, #06b6d4 0%, #0284c7 60%, #0369a1 100%);
+  border: 3px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 8px 24px rgba(2, 132, 199, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+}
+
+.action-jump-btn:active, .action-jump-btn.active {
+  background: radial-gradient(circle at 35% 35%, #38bdf8 0%, #0ea5e9 100%);
+  transform: scale(0.90);
+}

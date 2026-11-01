@@ -253,6 +253,22 @@
     <p><strong>[WASD / Flechas]</strong> Moverse &nbsp;|&nbsp; <strong>[Espacio]</strong> Saltar &nbsp;|&nbsp; <strong>[Ratón / Q-E]</strong> Girar cámara</p>
   </div>
 
+  <!-- Controles táctiles virtuales para dispositivos móviles y pantallas táctiles -->
+  <div id="touch-controls" class="touch-controls hidden">
+    <div id="touch-dpad" class="touch-dpad">
+      <button type="button" class="touch-btn dpad-btn dpad-up" data-key="KeyW" aria-label="Arriba">▲</button>
+      <div class="dpad-mid-row">
+        <button type="button" class="touch-btn dpad-btn dpad-left" data-key="KeyA" aria-label="Izquierda">◀</button>
+        <div class="dpad-core"></div>
+        <button type="button" class="touch-btn dpad-btn dpad-right" data-key="KeyD" aria-label="Derecha">▶</button>
+      </div>
+      <button type="button" class="touch-btn dpad-btn dpad-down" data-key="KeyS" aria-label="Abajo">▼</button>
+    </div>
+    <div class="touch-actions">
+      <button type="button" id="btn-touch-jump" class="touch-btn action-jump-btn" data-key="Space" aria-label="Saltar">A</button>
+    </div>
+  </div>
+
   <!-- ==========================================
        MODAL DE VICTORIA
        ========================================== -->

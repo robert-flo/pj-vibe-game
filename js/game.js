@@ -881,6 +881,7 @@ const btnSkipCinematic = document.getElementById('btn-skip-cinematic');
 
 const hud = document.getElementById('hud');
 const controlsHint = document.getElementById('controls-hint');
+const touchControls = document.getElementById('touch-controls');
 const signDialogEl = document.getElementById('sign-dialog');
 const signDialogTitleEl = signDialogEl ? signDialogEl.querySelector('.sign-dialog-title') : null;
 const signDialogTextEl = document.getElementById('sign-dialog-text');
@@ -987,7 +988,13 @@ function goToSceneGameplay() {
   scene3FileSelect.classList.add('hidden');
   n64HandCursor.classList.add('hidden');
   hud.classList.remove('hidden');
-  controlsHint.classList.remove('hidden');
+  const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.innerWidth <= 860);
+  if (touchControls && isTouchDevice) {
+    touchControls.classList.remove('hidden');
+    controlsHint.classList.add('hidden');
+  } else {
+    controlsHint.classList.remove('hidden');
+  }
   skyDome.visible = true;
 
   // El relevo de la cinemática: Bukele aparece junto a la tubería verde N64
@@ -1184,6 +1191,85 @@ window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Manejadores de eventos táctiles para controles virtuales y cámara móvil
+if (touchControls) {
+  const touchBtns = touchControls.querySelectorAll('.touch-btn');
+  touchBtns.forEach((btn) => {
+    const key = btn.dataset.key;
+    const activate = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      audio.init();
+      keys[key] = true;
+      btn.classList.add('active');
+      if (key === 'Space' && isGrounded && currentScene === SCENE_6_GAMEPLAY) {
+        velocityY = JUMP_FORCE;
+        isGrounded = false;
+        playMarioVoice();
+      }
+    };
+    const deactivate = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      keys[key] = false;
+      btn.classList.remove('active');
+    };
+    btn.addEventListener('pointerdown', activate);
+    btn.addEventListener('pointerup', deactivate);
+    btn.addEventListener('pointercancel', deactivate);
+    btn.addEventListener('pointerleave', deactivate);
+  });
+}
+
+let touchDragStartX = 0;
+let touchDragStartY = 0;
+let isTouchDragging = false;
+
+window.addEventListener('touchstart', (e) => {
+  if (e.target.closest && e.target.closest('.touch-btn')) return;
+  if (e.touches.length > 0) {
+    const t = e.touches[0];
+    touchDragStartX = t.clientX;
+    touchDragStartY = t.clientY;
+    isTouchDragging = true;
+    audio.init();
+
+    // Avance secuencial en pantallas táctiles
+    if (currentScene === SCENE_1_TITLE) {
+      goToScene2();
+    } else if (currentScene === SCENE_3_FILESELECT) {
+      goToSceneLetter();
+    } else if (currentScene === SCENE_4_LETTER) {
+      goToSceneCinematic();
+    } else if (currentScene === SCENE_5_CINEMATIC) {
+      goToSceneGameplay();
+    }
+  }
+}, { passive: false });
+
+window.addEventListener('touchmove', (e) => {
+  if (isTouchDragging && e.touches.length > 0) {
+    const t = e.touches[0];
+    const deltaX = t.clientX - touchDragStartX;
+    const deltaY = t.clientY - touchDragStartY;
+
+    if (currentScene === SCENE_2_HEAD) {
+      headDragYaw += deltaX * 0.006;
+      headDragPitch += deltaY * 0.006;
+    }
+    if (currentScene === SCENE_6_GAMEPLAY) {
+      cameraAngle -= deltaX * 0.006;
+    }
+
+    touchDragStartX = t.clientX;
+    touchDragStartY = t.clientY;
+  }
+}, { passive: true });
+
+window.addEventListener('touchend', () => {
+  isTouchDragging = false;
 });
 
 /* ==========================================================================
@@ -1465,6 +1551,7 @@ function startDoorOpeningSequence() {
     if (c.userData.active && c.position.z < -21.5) c.visible = false;
   });
   if (signDialogEl) signDialogEl.classList.add('hidden');
+  if (touchControls) touchControls.classList.add('hidden');
   controlsHint.classList.add('hidden');
   bgmCastleGrounds.pause();
 
