@@ -102,12 +102,16 @@
 
 ---
 
-## 🛠️ Arquitectura Tecnológica
+## 🛠️ Arquitectura Tecnológica y Fuentes de Texturas
 
 * **Motor Gráfico**: Three.js (WebGL ES Modules) sin empaquetadores opacos para máxima transparencia técnica.
 * **Modelado y Scripts Offline**: Blender 5.2.2 LTS con scripts en Python para compilación geométrica GLB y horneado UV.
 * **Audio**: Extracción y síntesis de secuencias `.m64` y bancos PCM `.aiff` desde la ROM original norteamericana de SM64 con NumPy y Web Audio API.
 * **Control de Versiones y Despliegue**: Git con commits atómicos granulares y despliegue automatizado mediante GitHub Pages.
+
+### 🌐 Repositorios Externos de Texturas y Descompilación
+* **Paquete de Texturas HD**: [RENDER96-HD-TEXTURE-PACK](https://github.com/pokeheadroom/RENDER96-HD-TEXTURE-PACK) (pokeheadroom / Render96 Team) — Muros, senderos, césped HD, árboles y agua.
+* **Descompilación C y Listas RSP**: [Render96ex](https://github.com/Render96/Render96ex) (Render96 Team) — Geometría N64 Fast3D de `levels/castle_grounds/areas/1/`.
 
 ---
 
