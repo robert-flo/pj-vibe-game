@@ -2,7 +2,7 @@
 
 > **Propósito**: Bitácora viva en la raíz de `pj-vibe-game` para registrar el estado exacto del proyecto, entregables oficiales, cambios completados y enlaces de entrega académica.
 
-**Última actualización**: 2026-11-01 12:10 (UTC-6)  
+**Última actualización**: 2026-11-01 12:15 (UTC-6)  
 **Actividad**: Semana 2 — Vibecoding Guiado (AI FOR DEVS JR. 5 - Kodigo Academy)  
 **Estudiante**: Roberto Carlos Flores Quintanilla  
 **Instructor**: Ing. Ronald Mejia  
@@ -14,7 +14,12 @@
 
 ## 1. ¿Qué está completado y publicado (`origin/main`)?
 
-0. **Corrección de GitHub Pages para el Portal de Documentación (Incidencia 18)**:
+0. **README Oficial del Motor con Gameplay HD, Enlaces Prominentes y Ficha Técnica**:
+   - Integración de la captura real de gameplay (`assets/screenshots/super_bukele_64_gameplay.jpg`) con el nivel Peach's Castle Grounds HD, vitral de Gabriela de Bukele, puente pavimentado, Bitcoin coleccionable y carteles del MOP 64.
+   - Enlace hero destacado al juego en vivo (`robert-flo.github.io/pj-vibe-game`), enlace a la documentación web Jekyll (`robert-flo.github.io/pj-vibe-game-docs`) y al repositorio de documentación (`github.com/robert-flo/pj-vibe-game-docs`).
+   - Tabla formal de enlaces, desglose del flujo de 6 escenas, guía completa de controles para PC/Móvil y ficha técnica institucional.
+
+1. **Corrección de GitHub Pages para el Portal de Documentación (Incidencia 18)**:
    - Diagnóstico: En `.github/workflows/deploy.yml`, el paso de compilación utilizaba `--baseurl "${{ steps.pages.base_path }}"`, la cual devolvía una cadena vacía `""`, sobreescribiendo el `baseurl: "/pj-vibe-game-docs"` de `_config.yml` y provocando errores HTTP 404 en las hojas de estilo CSS (`vitepress-core.css`, etc.) y scripts Turbo.
    - Solución: Se fijó `--baseurl "/pj-vibe-game-docs"` explícitamente en el workflow de despliegue. Despliegue verificado con código HTTP 200 en todos los recursos estáticos y renderizado completo.
 
