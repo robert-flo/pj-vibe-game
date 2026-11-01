@@ -16,7 +16,7 @@ os.makedirs(os.path.dirname(OUT_OBJ_PATH), exist_ok=True)
 TEX_MAP = {
     # Level textures
     "castle_grounds_seg7_texture_07000000": ("0.rgba16.png", TEX_LEVEL_DIR, 32, 64),
-    "castle_grounds_seg7_texture_07001000": ("1.rgba16.png", TEX_LEVEL_DIR, 32, 64),
+    "castle_grounds_seg7_texture_07001000": ("1.rgba16.png", TEX_LEVEL_DIR, 64, 32),
     "castle_grounds_seg7_texture_07002000": ("2.rgba16.png", TEX_LEVEL_DIR, 64, 32),
     "castle_grounds_seg7_texture_0700C9E8": ("3.rgba16.png", TEX_LEVEL_DIR, 32, 64),
     "castle_grounds_seg7_texture_0700D9E8": ("4.rgba16.png", TEX_LEVEL_DIR, 32, 64),

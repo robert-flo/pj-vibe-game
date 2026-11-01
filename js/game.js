@@ -424,6 +424,36 @@ gltfLoader.load(
     scene.add(castle);
     castle.updateMatrixWorld(true);
     castleLoaded = true;
+
+    // Vitral personalizable del castillo (Peach original por defecto, o personalizable con imagen propia)
+    const customGlassParam = new URLSearchParams(window.location.search).get('glass');
+    const glassTex = customGlassParam ? new THREE.TextureLoader().load(customGlassParam) : null;
+    if (glassTex) glassTex.colorSpace = THREE.SRGBColorSpace;
+
+    const glassOverlay = new THREE.Mesh(
+      new THREE.PlaneGeometry(8.04, 8.05),
+      new THREE.MeshBasicMaterial({
+        map: glassTex,
+        side: THREE.DoubleSide,
+        visible: !!customGlassParam
+      })
+    );
+    glassOverlay.position.set(0, 26.035, -20.36);
+    scene.add(glassOverlay);
+
+    window.setCastleStainedGlass = function(urlOrPath) {
+      if (!urlOrPath) {
+        glassOverlay.visible = false;
+        return;
+      }
+      const newTex = new THREE.TextureLoader().load(urlOrPath);
+      newTex.colorSpace = THREE.SRGBColorSpace;
+      glassOverlay.material.map = newTex;
+      glassOverlay.material.needsUpdate = true;
+      glassOverlay.visible = true;
+      console.log('[Stained Glass] Vitral actualizado:', urlOrPath);
+    };
+
     placeBitcoinsOnPath();
     placeWoodenSignposts();
     if (currentScene === SCENE_6_GAMEPLAY) {

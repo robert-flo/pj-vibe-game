@@ -2,19 +2,24 @@
 
 > **Propósito**: Bitácora viva en la raíz de `pj-vibe-game` para registrar el estado exacto del proyecto, entregables oficiales, cambios completados y enlaces de entrega académica.
 
-**Última actualización**: 2026-11-01 10:35 (UTC-6)  
+**Última actualización**: 2026-11-01 11:00 (UTC-6)  
 **Actividad**: Semana 2 — Vibecoding Guiado (AI FOR DEVS JR. 5 - Kodigo Academy)  
 **Estudiante**: Roberto Carlos Flores Quintanilla  
 **Instructor**: Ing. Ronald Mejia  
 **Repositorio principal**: `/home/omarchy/Projects/pj-vibe-game` ([Enlace GitHub](https://github.com/robert-flo/pj-vibe-game) | [Despliegue GitHub Pages](https://robert-flo.github.io/pj-vibe-game/))  
 **Repositorio de documentación**: `/home/omarchy/Projects/pj-vibe-game-docs` ([Enlace GitHub](https://github.com/robert-flo/pj-vibe-game-docs) | [Sitio Jekyll en Vivo](https://robert-flo.github.io/pj-vibe-game-docs/))  
-**PDF Oficial de Entrega**: `/home/omarchy/Desktop/RobertoFlores-Tarea02.pdf` (Documento A4 de 6 páginas con portada institucional Kodigo, resumen ejecutivo, tabla de 21 prompts, galería visual con capturas de Bukele Fortnite y cámara panorámica, 14 incidencias resueltas y respuestas a la rúbrica).
+**PDF Oficial de Entrega**: `/home/omarchy/Desktop/RobertoFlores-Tarea02.pdf` (Documento A4 con portada institucional Kodigo, resumen ejecutivo, tabla de prompts, galería visual, matriz de incidencias resueltas y rúbrica).
 
 ---
 
 ## 1. ¿Qué está completado y publicado (`origin/main`)?
 
-1. **Héroe Jugable Nayib Bukele Estilo Fortnite (Mejora 1)**:
+1. **Vitral de Peach Corregido y Sistema de Vitral Personalizable**:
+   - Diagnóstico de UVs: `castle_grounds_seg7_texture_07001000` (`1.rgba16.png`) tenía dimensiones `(32, 64)` invertidas en `scripts/export_castle_grounds.py` en lugar de `(64, 32)`, lo que causaba que la mitad inferior de Peach se dividiera verticalmente y se duplicara a los lados.
+   - Corregida la relación de aspecto en el exportador y re-exportado `assets/models/castle_grounds.glb` con Blender 5.2.2. Vitral ovalado de Peach ahora completamente continuo, unificado y en alta definición.
+   - Sistema de personalización dinámica habilitado en `js/game.js`: permite cambiar el vitral por cualquier imagen personalizada mediante el parámetro URL `?glass=ruta/imagen.png` o mediante la función de consola `window.setCastleStainedGlass(url)`.
+
+2. **Héroe Jugable Nayib Bukele Estilo Fortnite (Mejora 1)**:
    - Proporciones humanas estilizadas de 7.5 cabezas (`HS = 0.52`).
    - Torso atlético con volumen pectoral de 0.32m de profundidad, silueta en V (*V-taper*), saco entallado con pañuelo blanco en bolsillo, cinturón con hebilla de oro, reloj en la muñeca izquierda y zapatillas 3D con suela y puntera.
    - Jerarquía cinemática FK de 2 tramos por extremidad (`LegL/R -> ShinL/R`, `ArmL/R -> ForearmL/R`).
