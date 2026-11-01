@@ -2,7 +2,7 @@
 
 > **Propósito**: Bitácora viva en la raíz de `pj-vibe-game` para registrar el estado exacto del proyecto, entregables oficiales, cambios completados y enlaces de entrega académica.
 
-**Última actualización**: 2026-11-01 12:04 (UTC-6)  
+**Última actualización**: 2026-11-01 12:10 (UTC-6)  
 **Actividad**: Semana 2 — Vibecoding Guiado (AI FOR DEVS JR. 5 - Kodigo Academy)  
 **Estudiante**: Roberto Carlos Flores Quintanilla  
 **Instructor**: Ing. Ronald Mejia  
@@ -14,7 +14,11 @@
 
 ## 1. ¿Qué está completado y publicado (`origin/main`)?
 
-0. **Jerarquía Visual y Tabla Académica de Repositorios en el Documento PDF Oficial (`RobertoFlores-Tarea02.pdf` v7)**:
+0. **Corrección de GitHub Pages para el Portal de Documentación (Incidencia 18)**:
+   - Diagnóstico: En `.github/workflows/deploy.yml`, el paso de compilación utilizaba `--baseurl "${{ steps.pages.base_path }}"`, la cual devolvía una cadena vacía `""`, sobreescribiendo el `baseurl: "/pj-vibe-game-docs"` de `_config.yml` y provocando errores HTTP 404 en las hojas de estilo CSS (`vitepress-core.css`, etc.) y scripts Turbo.
+   - Solución: Se fijó `--baseurl "/pj-vibe-game-docs"` explícitamente en el workflow de despliegue. Despliegue verificado con código HTTP 200 en todos los recursos estáticos y renderizado completo.
+
+1. **Jerarquía Visual y Tabla Académica de Repositorios en el Documento PDF Oficial (`RobertoFlores-Tarea02.pdf` v7)**:
    - **Portada (Página 1)**: Tarjeta interactiva con gradiente azul (`#0284c7` a `#1e40af`) y llamado a la acción directo: `🎮 DEMO INTERACTIVA EN LÍNEA • ▶ CLIC AQUÍ PARA JUGAR: SUPER BUKELE 64`.
    - **Resumen Ejecutivo (Página 2)**:
      - *Hero Card* gaming con fondo oscuro estilizado, botón dorado con relieve (`#fbbf24`), enlace directo en tipografía monospace cian y badges de compatibilidad (100% navegador, PC y móvil, sin emuladores, audio N64 auténtico).
