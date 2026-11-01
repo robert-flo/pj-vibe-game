@@ -182,26 +182,30 @@ def create_leg(side):
     leg_upper = join(th, f"Leg{side}", (0, 0, 0))
     leg_upper.location = hip_pos
 
-    # --- Shin (Pantorrilla: Rodilla a Tobillo + Zapatilla) ---
+    # --- Shin (Pantorrilla: Rodilla a Tobillo) ---
     sh = []
     # Pantorrilla cónica
     sh.append(cyl(f"l_calf_{side}", 0.076, 0.38, (0.01, 0, -0.19), (1.15, 1.0, 1.0), PANTS, verts=18))
     # Tobillo
     sh.append(cyl(f"l_ankle_{side}", 0.060, 0.08, (0, 0, -0.36), (1.0, 1.0, 1.0), PANTS, verts=16))
-
-    # --- Zapatilla Deportiva Moderna (Sneaker estilo Fortnite) ---
-    # Suela de goma negra con dibujo
-    sh.append(box(f"s_sole_{side}", (0.26, 0.12, 0.038), (0.055, 0, -0.42), (0, 0, 0), SNEAKER_S, bevel=0.008))
-    # Cuerpo principal blanco
-    sh.append(box(f"s_body_{side}", (0.24, 0.108, 0.072), (0.05, 0, -0.375), (0, math.radians(-3), 0), SNEAKER_W, bevel=0.015))
-    # Puntera estilizada curvada hacia arriba
-    sh.append(box(f"s_toe_{side}", (0.09, 0.102, 0.050), (0.145, 0, -0.380), (0, math.radians(14), 0), SNEAKER_B, bevel=0.01))
-    # Detalle lateral azul marino
-    sh.append(box(f"s_stripe_{side}", (0.16, 0.114, 0.028), (0.045, 0, -0.370), (0, 0, 0), SNEAKER_B, bevel=0.004))
-
     leg_shin = join(sh, f"Shin{side}", (0, 0, 0))
     leg_shin.location = (0, 0, -0.42)
     leg_shin.parent = leg_upper
+
+    # --- Foot / Sneaker (Zapatilla Deportiva articulada en el tobillo) ---
+    ft = []
+    # Suela de goma negra con dibujo
+    ft.append(box(f"s_sole_{side}", (0.26, 0.12, 0.038), (0.015, 0, -0.04), (0, 0, 0), SNEAKER_S, bevel=0.008))
+    # Cuerpo principal blanco
+    ft.append(box(f"s_body_{side}", (0.24, 0.108, 0.072), (0.010, 0, 0.005), (0, math.radians(-3), 0), SNEAKER_W, bevel=0.015))
+    # Puntera estilizada curvada hacia arriba
+    ft.append(box(f"s_toe_{side}", (0.09, 0.102, 0.050), (0.105, 0, 0.000), (0, math.radians(14), 0), SNEAKER_B, bevel=0.01))
+    # Detalle lateral azul marino
+    ft.append(box(f"s_stripe_{side}", (0.16, 0.114, 0.028), (0.005, 0, 0.010), (0, 0, 0), SNEAKER_B, bevel=0.004))
+
+    leg_foot = join(ft, f"Foot{side}", (0, 0, 0))
+    leg_foot.location = (0.04, 0, -0.38)
+    leg_foot.parent = leg_shin
 
     return leg_upper
 

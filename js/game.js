@@ -243,7 +243,7 @@ function createBukeleCharacter() {
   gltfLoader.load('assets/models/bukele_body.glb', (gltf) => {
     gltf.scene.traverse((child) => {
       if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; }
-      if (['ArmL', 'ArmR', 'ForearmL', 'ForearmR', 'LegL', 'LegR', 'ShinL', 'ShinR', 'Torso'].includes(child.name)) {
+      if (['ArmL', 'ArmR', 'ForearmL', 'ForearmR', 'LegL', 'LegR', 'ShinL', 'ShinR', 'FootL', 'FootR', 'Torso'].includes(child.name)) {
         group.userData.limbs[child.name] = child;
       }
     });
@@ -1483,70 +1483,89 @@ function animateLimbs(swing, delta = 0.016, isMoving = false) {
   const t = clock.elapsedTime;
 
   if (isMoving && isGrounded) {
-    // 1. PIERNAS: Balanceo de cadera con flexión natural de rodilla (Knee Bend)
-    const legLRot = swing * 0.75;
-    const legRRot = -swing * 0.75;
+    // 1. PIERNAS: Ciclo atlético natural con flexión de rodilla y nivelación de zapatillas
+    const legLRot = swing * 0.48;
+    const legRRot = -swing * 0.48;
 
-    l.LegL.rotation.z = THREE.MathUtils.lerp(l.LegL.rotation.z, legLRot, 0.35);
-    l.LegR.rotation.z = THREE.MathUtils.lerp(l.LegR.rotation.z, legRRot, 0.35);
+    l.LegL.rotation.z = THREE.MathUtils.lerp(l.LegL.rotation.z, legLRot, 0.4);
+    l.LegR.rotation.z = THREE.MathUtils.lerp(l.LegR.rotation.z, legRRot, 0.4);
 
-    // Flexión de rodilla hacia atrás en la pierna retrasada
-    const kneeLTarget = legLRot < 0 ? Math.abs(legLRot) * 1.35 : 0.08;
-    const kneeRTarget = legRRot < 0 ? Math.abs(legRRot) * 1.35 : 0.08;
+    // Flexión orgánica de rodilla: amortigua al avanzar y levanta el talón al retroceder
+    const kneeLTarget = legLRot < 0 
+      ? Math.abs(legLRot) * 1.25 + 0.10 
+      : Math.max(0.06, Math.sin(walkCycle) * 0.22);
+    const kneeRTarget = legRRot < 0 
+      ? Math.abs(legRRot) * 1.25 + 0.10 
+      : Math.max(0.06, Math.sin(walkCycle + Math.PI) * 0.22);
 
-    if (l.ShinL) l.ShinL.rotation.z = THREE.MathUtils.lerp(l.ShinL.rotation.z, kneeLTarget, 0.35);
-    if (l.ShinR) l.ShinR.rotation.z = THREE.MathUtils.lerp(l.ShinR.rotation.z, kneeRTarget, 0.35);
+    if (l.ShinL) l.ShinL.rotation.z = THREE.MathUtils.lerp(l.ShinL.rotation.z, kneeLTarget, 0.4);
+    if (l.ShinR) l.ShinR.rotation.z = THREE.MathUtils.lerp(l.ShinR.rotation.z, kneeRTarget, 0.4);
 
-    // 2. BRAZOS: Braceo atlético con codos doblados (estilo corredor / Fortnite)
-    const armLRot = -swing * 0.65;
-    const armRRot = swing * 0.65;
+    // Tobillos / Zapatillas 3D: Nivelación horizontal continua para evitar pies hacia arriba
+    if (l.FootL) {
+      const footLTarget = legLRot > 0 ? -legLRot * 0.65 : -legLRot * 0.50;
+      l.FootL.rotation.z = THREE.MathUtils.lerp(l.FootL.rotation.z, footLTarget, 0.4);
+    }
+    if (l.FootR) {
+      const footRTarget = legRRot > 0 ? -legRRot * 0.65 : -legRRot * 0.50;
+      l.FootR.rotation.z = THREE.MathUtils.lerp(l.FootR.rotation.z, footRTarget, 0.4);
+    }
 
-    l.ArmL.rotation.z = THREE.MathUtils.lerp(l.ArmL.rotation.z, armLRot, 0.35);
-    l.ArmR.rotation.z = THREE.MathUtils.lerp(l.ArmR.rotation.z, armRRot, 0.35);
-    l.ArmL.rotation.x = THREE.MathUtils.lerp(l.ArmL.rotation.x, 0.12, 0.2);
-    l.ArmR.rotation.x = THREE.MathUtils.lerp(l.ArmR.rotation.x, -0.12, 0.2);
+    // 2. BRAZOS: Braceo atlético natural y relajado (estilo corredor Fortnite)
+    const armLRot = -swing * 0.38;
+    const armRRot = swing * 0.38;
 
+    l.ArmL.rotation.z = THREE.MathUtils.lerp(l.ArmL.rotation.z, armLRot - 0.08, 0.4);
+    l.ArmR.rotation.z = THREE.MathUtils.lerp(l.ArmR.rotation.z, armRRot - 0.08, 0.4);
+    l.ArmL.rotation.x = THREE.MathUtils.lerp(l.ArmL.rotation.x, 0.08, 0.2);
+    l.ArmR.rotation.x = THREE.MathUtils.lerp(l.ArmR.rotation.x, -0.08, 0.2);
+
+    // Codos: flexión dinámica según el avance del brazo
     if (l.ForearmL) {
-      const forearmLTarget = 0.55 + Math.max(0, -armLRot * 0.4);
-      l.ForearmL.rotation.z = THREE.MathUtils.lerp(l.ForearmL.rotation.z, forearmLTarget, 0.35);
+      const forearmLTarget = 0.42 + Math.max(0, -armLRot * 0.50);
+      l.ForearmL.rotation.z = THREE.MathUtils.lerp(l.ForearmL.rotation.z, forearmLTarget, 0.4);
     }
     if (l.ForearmR) {
-      const forearmRTarget = 0.55 + Math.max(0, -armRRot * 0.4);
-      l.ForearmR.rotation.z = THREE.MathUtils.lerp(l.ForearmR.rotation.z, forearmRTarget, 0.35);
+      const forearmRTarget = 0.42 + Math.max(0, -armRRot * 0.50);
+      l.ForearmR.rotation.z = THREE.MathUtils.lerp(l.ForearmR.rotation.z, forearmRTarget, 0.4);
     }
 
     if (l.Head) {
-      l.Head.rotation.y = Math.sin(walkCycle) * 0.04;
+      l.Head.rotation.y = Math.sin(walkCycle) * 0.03;
     }
   } else if (!isGrounded) {
-    // EN EL AIRE (SALTO): Piernas flexionadas y brazos abiertos para equilibrio
-    l.LegL.rotation.z = THREE.MathUtils.lerp(l.LegL.rotation.z, 0.40, 0.25);
-    l.LegR.rotation.z = THREE.MathUtils.lerp(l.LegR.rotation.z, 0.25, 0.25);
-    if (l.ShinL) l.ShinL.rotation.z = THREE.MathUtils.lerp(l.ShinL.rotation.z, 0.55, 0.25);
-    if (l.ShinR) l.ShinR.rotation.z = THREE.MathUtils.lerp(l.ShinR.rotation.z, 0.45, 0.25);
+    // EN EL AIRE (SALTO): Piernas flexionadas y brazos para equilibrio
+    l.LegL.rotation.z = THREE.MathUtils.lerp(l.LegL.rotation.z, 0.35, 0.25);
+    l.LegR.rotation.z = THREE.MathUtils.lerp(l.LegR.rotation.z, 0.20, 0.25);
+    if (l.ShinL) l.ShinL.rotation.z = THREE.MathUtils.lerp(l.ShinL.rotation.z, 0.45, 0.25);
+    if (l.ShinR) l.ShinR.rotation.z = THREE.MathUtils.lerp(l.ShinR.rotation.z, 0.35, 0.25);
+    if (l.FootL) l.FootL.rotation.z = THREE.MathUtils.lerp(l.FootL.rotation.z, 0.18, 0.25);
+    if (l.FootR) l.FootR.rotation.z = THREE.MathUtils.lerp(l.FootR.rotation.z, 0.18, 0.25);
 
-    l.ArmL.rotation.z = THREE.MathUtils.lerp(l.ArmL.rotation.z, -0.45, 0.25);
-    l.ArmR.rotation.z = THREE.MathUtils.lerp(l.ArmR.rotation.z, 0.45, 0.25);
-    l.ArmL.rotation.x = THREE.MathUtils.lerp(l.ArmL.rotation.x, 0.38, 0.25);
-    l.ArmR.rotation.x = THREE.MathUtils.lerp(l.ArmR.rotation.x, -0.38, 0.25);
-    if (l.ForearmL) l.ForearmL.rotation.z = THREE.MathUtils.lerp(l.ForearmL.rotation.z, 0.65, 0.25);
-    if (l.ForearmR) l.ForearmR.rotation.z = THREE.MathUtils.lerp(l.ForearmR.rotation.z, 0.65, 0.25);
+    l.ArmL.rotation.z = THREE.MathUtils.lerp(l.ArmL.rotation.z, -0.38, 0.25);
+    l.ArmR.rotation.z = THREE.MathUtils.lerp(l.ArmR.rotation.z, 0.38, 0.25);
+    l.ArmL.rotation.x = THREE.MathUtils.lerp(l.ArmL.rotation.x, 0.25, 0.25);
+    l.ArmR.rotation.x = THREE.MathUtils.lerp(l.ArmR.rotation.x, -0.25, 0.25);
+    if (l.ForearmL) l.ForearmL.rotation.z = THREE.MathUtils.lerp(l.ForearmL.rotation.z, 0.55, 0.25);
+    if (l.ForearmR) l.ForearmR.rotation.z = THREE.MathUtils.lerp(l.ForearmR.rotation.z, 0.55, 0.25);
   } else {
-    // IDLE (EN REPOSO): Postura viva, respiración suave y flexión natural de codos
+    // IDLE (EN REPOSO): Postura viva con respiración suave
     const breath = Math.sin(t * 2.2);
 
     l.LegL.rotation.z = THREE.MathUtils.lerp(l.LegL.rotation.z, 0.02, 0.2);
     l.LegR.rotation.z = THREE.MathUtils.lerp(l.LegR.rotation.z, -0.02, 0.2);
     if (l.ShinL) l.ShinL.rotation.z = THREE.MathUtils.lerp(l.ShinL.rotation.z, 0.04, 0.2);
     if (l.ShinR) l.ShinR.rotation.z = THREE.MathUtils.lerp(l.ShinR.rotation.z, 0.04, 0.2);
+    if (l.FootL) l.FootL.rotation.z = THREE.MathUtils.lerp(l.FootL.rotation.z, 0.0, 0.2);
+    if (l.FootR) l.FootR.rotation.z = THREE.MathUtils.lerp(l.FootR.rotation.z, 0.0, 0.2);
 
-    l.ArmL.rotation.z = THREE.MathUtils.lerp(l.ArmL.rotation.z, 0.04 + breath * 0.02, 0.2);
-    l.ArmR.rotation.z = THREE.MathUtils.lerp(l.ArmR.rotation.z, -0.04 - breath * 0.02, 0.2);
-    l.ArmL.rotation.x = THREE.MathUtils.lerp(l.ArmL.rotation.x, 0.08, 0.2);
-    l.ArmR.rotation.x = THREE.MathUtils.lerp(l.ArmR.rotation.x, -0.08, 0.2);
+    l.ArmL.rotation.z = THREE.MathUtils.lerp(l.ArmL.rotation.z, -0.02 + breath * 0.02, 0.2);
+    l.ArmR.rotation.z = THREE.MathUtils.lerp(l.ArmR.rotation.z, -0.02 - breath * 0.02, 0.2);
+    l.ArmL.rotation.x = THREE.MathUtils.lerp(l.ArmL.rotation.x, 0.06, 0.2);
+    l.ArmR.rotation.x = THREE.MathUtils.lerp(l.ArmR.rotation.x, -0.06, 0.2);
 
-    if (l.ForearmL) l.ForearmL.rotation.z = THREE.MathUtils.lerp(l.ForearmL.rotation.z, 0.25 + breath * 0.03, 0.2);
-    if (l.ForearmR) l.ForearmR.rotation.z = THREE.MathUtils.lerp(l.ForearmR.rotation.z, 0.25 + breath * 0.03, 0.2);
+    if (l.ForearmL) l.ForearmL.rotation.z = THREE.MathUtils.lerp(l.ForearmL.rotation.z, 0.20 + breath * 0.02, 0.2);
+    if (l.ForearmR) l.ForearmR.rotation.z = THREE.MathUtils.lerp(l.ForearmR.rotation.z, 0.20 + breath * 0.02, 0.2);
 
     if (l.Torso) {
       l.Torso.position.y = 1.15 + breath * 0.008;
@@ -1635,11 +1654,11 @@ function updatePhysics(delta) {
     const targetRotation = Math.atan2(moveVector.x, moveVector.z);
     player.rotation.y = THREE.MathUtils.lerp(player.rotation.y, targetRotation, 14 * delta);
 
-    walkCycle += delta * 12;
-    animateLimbs(Math.sin(walkCycle) * 0.9, delta, true);
+    walkCycle += delta * 9.5;
+    animateLimbs(Math.sin(walkCycle), delta, true);
     if (player.userData.blenderModel) {
-      player.userData.blenderModel.position.y = Math.abs(Math.sin(walkCycle * 2)) * 0.08;
-      player.userData.blenderModel.rotation.z = 0.08; // Leve inclinación atlética hacia adelante al correr
+      player.userData.blenderModel.position.y = Math.abs(Math.sin(walkCycle)) * 0.045;
+      player.userData.blenderModel.rotation.z = -0.10; // Inclinación atlética hacia adelante al correr
       player.userData.blenderModel.rotation.x = Math.sin(walkCycle) * 0.04; // Torsión sutil de hombros
     }
   } else {
@@ -1648,6 +1667,17 @@ function updatePhysics(delta) {
       player.userData.blenderModel.position.y = THREE.MathUtils.lerp(player.userData.blenderModel.position.y, 0, 10 * delta);
       player.userData.blenderModel.rotation.z = THREE.MathUtils.lerp(player.userData.blenderModel.rotation.z, 0, 10 * delta);
       player.userData.blenderModel.rotation.x = THREE.MathUtils.lerp(player.userData.blenderModel.rotation.x, 0, 10 * delta);
+    }
+  }
+
+  const dbgStride = new URLSearchParams(window.location.search).get('stride');
+  if (dbgStride !== null) {
+    const sVal = Number(dbgStride);
+    animateLimbs(Math.sin(sVal), delta, true);
+    if (player.userData.blenderModel) {
+      player.userData.blenderModel.position.y = Math.abs(Math.sin(sVal)) * 0.045;
+      player.userData.blenderModel.rotation.z = -0.10;
+      player.userData.blenderModel.rotation.x = Math.sin(sVal) * 0.04;
     }
   }
 

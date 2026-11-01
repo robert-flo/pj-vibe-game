@@ -2,7 +2,7 @@
 
 > **Propósito**: Bitácora viva en la raíz de `pj-vibe-game` para registrar el estado exacto del proyecto, entregables oficiales, cambios completados y enlaces de entrega académica.
 
-**Última actualización**: 2026-11-01 11:25 (UTC-6)  
+**Última actualización**: 2026-11-01 11:40 (UTC-6)  
 **Actividad**: Semana 2 — Vibecoding Guiado (AI FOR DEVS JR. 5 - Kodigo Academy)  
 **Estudiante**: Roberto Carlos Flores Quintanilla  
 **Instructor**: Ing. Ronald Mejia  
@@ -14,7 +14,16 @@
 
 ## 1. ¿Qué está completado y publicado (`origin/main`)?
 
-1. **Corrección de la Pantalla SELECT FILE (Escena 3 - Desbloqueo y Debounce Guard)**:
+1. **Animación Orgánica y Fluida de Caminata/Carrera de Bukele (FK de 3 Huesos con Tobillos Articulados)**:
+   - Diagnóstico: La pierna delantera se proyectaba recta a 45° como una estaca rígida con la zapatilla apuntando hacia el cielo, la rodilla trasera se doblaba en exceso (~58°), el torso se inclinaba hacia atrás (`+0.08` rad) y el rebote vertical vibraba al doble de frecuencia.
+   - Solución:
+     - Jerarquía FK extendida en Blender (`Leg -> Shin -> Foot`): se crearon los nodos `FootL` y `FootR` para articular las zapatillas 3D en el tobillo.
+     - Nivelación automática de pies en `animateLimbs()`: las zapatillas contrarrestan el ángulo de la pierna y se mantienen paralelas al suelo al pisar.
+     - Flexión suave y natural de rodilla en el avance y recogida trasera amortiguada.
+     - Inclinación atlética hacia adelante (`pitch = -0.10` rad) hacia la dirección de avance.
+     - Cadencia de trote natural (`walkCycle += delta * 9.5`) y rebote vertical suave de un solo pulso por paso (`Math.abs(Math.sin(walkCycle)) * 0.045`).
+
+2. **Corrección de la Pantalla SELECT FILE (Escena 3 - Desbloqueo y Debounce Guard)**:
    - Diagnóstico: Al pulsar "PRESS START" en la Escena 2, el evento `pointerdown` transicionaba a la Escena 3 pero el subsecuente evento `mousedown`/`click` en el mismo ciclo era capturado por el listener global de ventana, saltándose la pantalla en 0 ms directo a la Carta de Gabriela.
    - Solución: Se implementó un guardián de tiempo (`scene3EnterTime = performance.now()`) con una ventana de protección de 450 ms que absorbe cualquier clic residual. La pantalla dorada SELECT FILE ahora permanece activa y permite interactuar con el cursor de mano 3D sobre los slots `BUKELE A, B, C, D`.
 
