@@ -243,7 +243,9 @@ function createBukeleCharacter() {
   gltfLoader.load('assets/models/bukele_body.glb', (gltf) => {
     gltf.scene.traverse((child) => {
       if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; }
-      if (['ArmL', 'ArmR', 'LegL', 'LegR'].includes(child.name)) group.userData.limbs[child.name] = child;
+      if (['ArmL', 'ArmR', 'ForearmL', 'ForearmR', 'LegL', 'LegR', 'ShinL', 'ShinR', 'Torso'].includes(child.name)) {
+        group.userData.limbs[child.name] = child;
+      }
     });
     heroRoot.add(gltf.scene);
   }, undefined, (err) => console.warn('[GLTF] bukele_body.glb:', err));
@@ -266,7 +268,7 @@ gltfLoader.load(
       }
     });
 
-    // 1. Clon para el héroe jugable con recorte limpio de busto/cuello
+    // 1. Clon para el héroe jugable con proporciones atléticas humanas estilo Fortnite (7.5 cabezas)
     const heroHead = rawHead.clone(true);
     heroHead.traverse((child) => {
       if (!child.isMesh) return;
@@ -286,10 +288,11 @@ gltfLoader.load(
       };
       child.material.needsUpdate = true;
     });
-    const HS = 0.9;
+    const HS = 0.52;
     heroHead.scale.setScalar(HS);
-    heroHead.position.set(0, 1.80, 0);
+    heroHead.position.set(0.015, 1.58, 0);
     player.userData.blenderModel.add(heroHead);
+    player.userData.limbs['Head'] = heroHead;
 
     // 2. Busto interactivo para Escena 2
     bukeleHeadMesh = rawHead;
@@ -847,6 +850,14 @@ let doorAnimElapsed = 0;
 let doorAnimStartTime = 0;
 
 // Audio auténtico renderizado desde la ROM original de Super Mario 64 del usuario
+const bgmTitleScreen = new Audio('assets/audio/sm64/title_screen_bgm.mp3');
+bgmTitleScreen.loop = true;
+bgmTitleScreen.volume = 0.50;
+
+const bgmFileSelect = new Audio('assets/audio/sm64/file_select_bgm.mp3');
+bgmFileSelect.loop = true;
+bgmFileSelect.volume = 0.48;
+
 const bgmCastleGrounds = new Audio('assets/audio/sm64/castle_grounds_bgm.mp3');
 bgmCastleGrounds.loop = true;
 bgmCastleGrounds.volume = 0.42;
@@ -862,6 +873,12 @@ sfxHereWeGo.volume = 0.85;
 
 const sfxStarFanfare = new Audio('assets/audio/sm64/star_fanfare.mp3');
 sfxStarFanfare.volume = 0.72;
+
+function playTitleAudio() {
+  if (bgmTitleScreen.paused && currentScene <= SCENE_2_HEAD) {
+    bgmTitleScreen.play().catch(() => {});
+  }
+}
 
 const headBgMosaic = document.getElementById('head-bg-mosaic');
 const scene1Title = document.getElementById('scene-1-title');
@@ -881,6 +898,7 @@ const btnSkipCinematic = document.getElementById('btn-skip-cinematic');
 
 const hud = document.getElementById('hud');
 const controlsHint = document.getElementById('controls-hint');
+const orientationHint = document.getElementById('orientation-hint');
 const touchControls = document.getElementById('touch-controls');
 const signDialogEl = document.getElementById('sign-dialog');
 const signDialogTitleEl = signDialogEl ? signDialogEl.querySelector('.sign-dialog-title') : null;
@@ -891,11 +909,25 @@ const coinCountEl = document.getElementById('coin-count');
 const finalCoinsEl = document.getElementById('final-coins');
 const finalTimeEl = document.getElementById('final-time');
 
+function updateOrientationHint() {
+  if (!orientationHint) return;
+  const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.innerWidth <= 860);
+  if (isTouch && window.innerHeight > window.innerWidth) {
+    orientationHint.classList.remove('hidden');
+  } else {
+    orientationHint.classList.add('hidden');
+  }
+}
+window.addEventListener('resize', updateOrientationHint);
+window.addEventListener('orientationchange', updateOrientationHint);
+updateOrientationHint();
+
 // Transición: Escena 1 -> Escena 2 (Cabeza 3D)
 function goToScene2() {
   if (currentScene !== SCENE_1_TITLE) return;
   audio.init();
   audio.playStartChime();
+  playTitleAudio();
 
   currentScene = SCENE_2_HEAD;
   scene2EnterTime = performance.now();
@@ -908,11 +940,15 @@ function goToScene2() {
 // Transición: Escena 2 -> Escena 3 (Pantalla SELECT FILE)
 function goToScene3(force = false) {
   if (currentScene !== SCENE_2_HEAD) return;
-  // Cooldown de 2.2 segundos para que el usuario pueda interactuar con el rostro 3D de Bukele
-  if (!force && performance.now() - scene2EnterTime < 2200) return;
+  if (!force && performance.now() - scene2EnterTime < 800) return;
 
   audio.init();
   audio.playStartChime();
+
+  // Cambiar música de Title a File Select original de SM64
+  bgmTitleScreen.pause();
+  bgmFileSelect.currentTime = 0;
+  bgmFileSelect.play().catch(() => {});
 
   currentScene = SCENE_3_FILESELECT;
   headBgMosaic.classList.add('hidden');
@@ -937,6 +973,7 @@ function goToSceneLetter() {
 
   audio.init();
   audio.playStartChime();
+  bgmFileSelect.pause();
 
   currentScene = SCENE_4_LETTER;
   scene3FileSelect.classList.add('hidden');
@@ -971,6 +1008,8 @@ function goToSceneCinematic() {
 function goToSceneGameplay() {
   if (currentScene !== SCENE_5_CINEMATIC && currentScene !== SCENE_4_LETTER && currentScene !== SCENE_3_FILESELECT) return;
 
+  if (bgmTitleScreen) bgmTitleScreen.pause();
+  if (bgmFileSelect) bgmFileSelect.pause();
   if (audioLetter) audioLetter.pause();
   if (cinematicVideo) cinematicVideo.pause();
 
@@ -1006,11 +1045,19 @@ btnScene1Start.addEventListener('click', (e) => {
   e.stopPropagation();
   goToScene2();
 });
+btnScene1Start.addEventListener('pointerdown', (e) => {
+  e.stopPropagation();
+  goToScene2();
+});
 
 // En Escena 2, el botón Rainbow PRESS START pasa a SELECT FILE
 btnScene2Start.addEventListener('click', (e) => {
   e.stopPropagation();
-  goToScene3();
+  goToScene3(true);
+});
+btnScene2Start.addEventListener('pointerdown', (e) => {
+  e.stopPropagation();
+  goToScene3(true);
 });
 
 // En Escena 3, cualquier clic en la pantalla SELECT FILE avanza a la Carta de Gabriela
@@ -1089,6 +1136,7 @@ const JUMP_FORCE = 13.5;
 const SPEED = 9.0;
 
 let cameraAngle = 0;
+let cameraPitch = 0.12;
 let isDragging = false;
 let previousMouseX = 0;
 let previousMouseY = 0;
@@ -1130,6 +1178,8 @@ window.addEventListener('keydown', (e) => {
 
   if (e.code === 'KeyQ') cameraAngle += 0.08;
   if (e.code === 'KeyE') cameraAngle -= 0.08;
+  if (e.code === 'KeyR' || e.code === 'PageUp') cameraPitch = Math.min(0.72, cameraPitch + 0.06);
+  if (e.code === 'KeyF' || e.code === 'PageDown') cameraPitch = Math.max(-0.35, cameraPitch - 0.06);
 });
 
 window.addEventListener('keyup', (e) => {
@@ -1158,8 +1208,11 @@ window.addEventListener('mousemove', (e) => {
 
   if (isDragging && currentScene === SCENE_6_GAMEPLAY) {
     const deltaX = e.clientX - previousMouseX;
+    const deltaY = e.clientY - previousMouseY;
     cameraAngle -= deltaX * 0.005;
+    cameraPitch = Math.max(-0.35, Math.min(0.72, cameraPitch + deltaY * 0.005));
     previousMouseX = e.clientX;
+    previousMouseY = e.clientY;
   }
 });
 
@@ -1239,6 +1292,10 @@ window.addEventListener('touchstart', (e) => {
     // Avance secuencial en pantallas táctiles
     if (currentScene === SCENE_1_TITLE) {
       goToScene2();
+    } else if (currentScene === SCENE_2_HEAD) {
+      if (performance.now() - scene2EnterTime > 750) {
+        goToScene3(true);
+      }
     } else if (currentScene === SCENE_3_FILESELECT) {
       goToSceneLetter();
     } else if (currentScene === SCENE_4_LETTER) {
@@ -1261,6 +1318,7 @@ window.addEventListener('touchmove', (e) => {
     }
     if (currentScene === SCENE_6_GAMEPLAY) {
       cameraAngle -= deltaX * 0.006;
+      cameraPitch = Math.max(-0.35, Math.min(0.72, cameraPitch + deltaY * 0.006));
     }
 
     touchDragStartX = t.clientX;
@@ -1371,14 +1429,82 @@ function formatElapsedTime(ms) {
   return `${mins}:${secs}`;
 }
 
-function animateLimbs(swing) {
+function animateLimbs(swing, delta = 0.016, isMoving = false) {
   const l = player.userData.limbs;
   if (!l || !l.LegL) return;
-  const k = isGrounded ? 1 : 0.2;
-  l.LegL.rotation.z = THREE.MathUtils.lerp(l.LegL.rotation.z, swing * k, 0.4);
-  l.LegR.rotation.z = THREE.MathUtils.lerp(l.LegR.rotation.z, -swing * k, 0.4);
-  l.ArmL.rotation.z = THREE.MathUtils.lerp(l.ArmL.rotation.z, -swing * 0.8 * k, 0.4);
-  l.ArmR.rotation.z = THREE.MathUtils.lerp(l.ArmR.rotation.z, swing * 0.8 * k, 0.4);
+
+  const t = clock.elapsedTime;
+
+  if (isMoving && isGrounded) {
+    // 1. PIERNAS: Balanceo de cadera con flexión natural de rodilla (Knee Bend)
+    const legLRot = swing * 0.75;
+    const legRRot = -swing * 0.75;
+
+    l.LegL.rotation.z = THREE.MathUtils.lerp(l.LegL.rotation.z, legLRot, 0.35);
+    l.LegR.rotation.z = THREE.MathUtils.lerp(l.LegR.rotation.z, legRRot, 0.35);
+
+    // Flexión de rodilla hacia atrás en la pierna retrasada
+    const kneeLTarget = legLRot < 0 ? Math.abs(legLRot) * 1.35 : 0.08;
+    const kneeRTarget = legRRot < 0 ? Math.abs(legRRot) * 1.35 : 0.08;
+
+    if (l.ShinL) l.ShinL.rotation.z = THREE.MathUtils.lerp(l.ShinL.rotation.z, kneeLTarget, 0.35);
+    if (l.ShinR) l.ShinR.rotation.z = THREE.MathUtils.lerp(l.ShinR.rotation.z, kneeRTarget, 0.35);
+
+    // 2. BRAZOS: Braceo atlético con codos doblados (estilo corredor / Fortnite)
+    const armLRot = -swing * 0.65;
+    const armRRot = swing * 0.65;
+
+    l.ArmL.rotation.z = THREE.MathUtils.lerp(l.ArmL.rotation.z, armLRot, 0.35);
+    l.ArmR.rotation.z = THREE.MathUtils.lerp(l.ArmR.rotation.z, armRRot, 0.35);
+    l.ArmL.rotation.x = THREE.MathUtils.lerp(l.ArmL.rotation.x, 0.12, 0.2);
+    l.ArmR.rotation.x = THREE.MathUtils.lerp(l.ArmR.rotation.x, -0.12, 0.2);
+
+    if (l.ForearmL) {
+      const forearmLTarget = 0.55 + Math.max(0, -armLRot * 0.4);
+      l.ForearmL.rotation.z = THREE.MathUtils.lerp(l.ForearmL.rotation.z, forearmLTarget, 0.35);
+    }
+    if (l.ForearmR) {
+      const forearmRTarget = 0.55 + Math.max(0, -armRRot * 0.4);
+      l.ForearmR.rotation.z = THREE.MathUtils.lerp(l.ForearmR.rotation.z, forearmRTarget, 0.35);
+    }
+
+    if (l.Head) {
+      l.Head.rotation.y = Math.sin(walkCycle) * 0.04;
+    }
+  } else if (!isGrounded) {
+    // EN EL AIRE (SALTO): Piernas flexionadas y brazos abiertos para equilibrio
+    l.LegL.rotation.z = THREE.MathUtils.lerp(l.LegL.rotation.z, 0.40, 0.25);
+    l.LegR.rotation.z = THREE.MathUtils.lerp(l.LegR.rotation.z, 0.25, 0.25);
+    if (l.ShinL) l.ShinL.rotation.z = THREE.MathUtils.lerp(l.ShinL.rotation.z, 0.55, 0.25);
+    if (l.ShinR) l.ShinR.rotation.z = THREE.MathUtils.lerp(l.ShinR.rotation.z, 0.45, 0.25);
+
+    l.ArmL.rotation.z = THREE.MathUtils.lerp(l.ArmL.rotation.z, -0.45, 0.25);
+    l.ArmR.rotation.z = THREE.MathUtils.lerp(l.ArmR.rotation.z, 0.45, 0.25);
+    l.ArmL.rotation.x = THREE.MathUtils.lerp(l.ArmL.rotation.x, 0.38, 0.25);
+    l.ArmR.rotation.x = THREE.MathUtils.lerp(l.ArmR.rotation.x, -0.38, 0.25);
+    if (l.ForearmL) l.ForearmL.rotation.z = THREE.MathUtils.lerp(l.ForearmL.rotation.z, 0.65, 0.25);
+    if (l.ForearmR) l.ForearmR.rotation.z = THREE.MathUtils.lerp(l.ForearmR.rotation.z, 0.65, 0.25);
+  } else {
+    // IDLE (EN REPOSO): Postura viva, respiración suave y flexión natural de codos
+    const breath = Math.sin(t * 2.2);
+
+    l.LegL.rotation.z = THREE.MathUtils.lerp(l.LegL.rotation.z, 0.02, 0.2);
+    l.LegR.rotation.z = THREE.MathUtils.lerp(l.LegR.rotation.z, -0.02, 0.2);
+    if (l.ShinL) l.ShinL.rotation.z = THREE.MathUtils.lerp(l.ShinL.rotation.z, 0.04, 0.2);
+    if (l.ShinR) l.ShinR.rotation.z = THREE.MathUtils.lerp(l.ShinR.rotation.z, 0.04, 0.2);
+
+    l.ArmL.rotation.z = THREE.MathUtils.lerp(l.ArmL.rotation.z, 0.04 + breath * 0.02, 0.2);
+    l.ArmR.rotation.z = THREE.MathUtils.lerp(l.ArmR.rotation.z, -0.04 - breath * 0.02, 0.2);
+    l.ArmL.rotation.x = THREE.MathUtils.lerp(l.ArmL.rotation.x, 0.08, 0.2);
+    l.ArmR.rotation.x = THREE.MathUtils.lerp(l.ArmR.rotation.x, -0.08, 0.2);
+
+    if (l.ForearmL) l.ForearmL.rotation.z = THREE.MathUtils.lerp(l.ForearmL.rotation.z, 0.25 + breath * 0.03, 0.2);
+    if (l.ForearmR) l.ForearmR.rotation.z = THREE.MathUtils.lerp(l.ForearmR.rotation.z, 0.25 + breath * 0.03, 0.2);
+
+    if (l.Torso) {
+      l.Torso.position.y = 1.15 + breath * 0.008;
+    }
+  }
 }
 
 function updateSignpostDialog() {
@@ -1463,16 +1589,18 @@ function updatePhysics(delta) {
     player.rotation.y = THREE.MathUtils.lerp(player.rotation.y, targetRotation, 14 * delta);
 
     walkCycle += delta * 12;
-    animateLimbs(Math.sin(walkCycle) * 0.9);
+    animateLimbs(Math.sin(walkCycle) * 0.9, delta, true);
     if (player.userData.blenderModel) {
-      player.userData.blenderModel.position.y = Math.abs(Math.sin(walkCycle * 2)) * 0.12;
-      player.userData.blenderModel.rotation.z = Math.sin(walkCycle) * 0.05;
+      player.userData.blenderModel.position.y = Math.abs(Math.sin(walkCycle * 2)) * 0.08;
+      player.userData.blenderModel.rotation.z = 0.08; // Leve inclinación atlética hacia adelante al correr
+      player.userData.blenderModel.rotation.x = Math.sin(walkCycle) * 0.04; // Torsión sutil de hombros
     }
   } else {
-    animateLimbs(0);
+    animateLimbs(0, delta, false);
     if (player.userData.blenderModel) {
       player.userData.blenderModel.position.y = THREE.MathUtils.lerp(player.userData.blenderModel.position.y, 0, 10 * delta);
       player.userData.blenderModel.rotation.z = THREE.MathUtils.lerp(player.userData.blenderModel.rotation.z, 0, 10 * delta);
+      player.userData.blenderModel.rotation.x = THREE.MathUtils.lerp(player.userData.blenderModel.rotation.x, 0, 10 * delta);
     }
   }
 
@@ -1626,19 +1754,21 @@ function updateCamera(delta) {
     camera.position.z = THREE.MathUtils.lerp(camera.position.z, -23.2, camAlpha);
     camera.lookAt(0, 9.3, -31.55);
   } else {
-    // Escena 6: Cámara de Gameplay en 3ª persona
+    // Escena 6: Cámara de Gameplay en 3ª persona con inclinación vertical (pitch)
     const cameraDistance = 8.5;
-    const cameraHeight = 4.0;
+    const cameraHeight = 3.6;
 
-    const targetX = player.position.x + Math.sin(cameraAngle) * cameraDistance;
-    const targetZ = player.position.z + Math.cos(cameraAngle) * cameraDistance;
-    const targetY = player.position.y + cameraHeight;
+    const horizDist = cameraDistance * Math.cos(cameraPitch);
+    const targetX = player.position.x + Math.sin(cameraAngle) * horizDist;
+    const targetZ = player.position.z + Math.cos(cameraAngle) * horizDist;
+    const targetY = player.position.y + cameraHeight - Math.sin(cameraPitch) * cameraDistance * 0.65;
 
     camera.position.x = THREE.MathUtils.lerp(camera.position.x, targetX, 8 * delta);
     camera.position.y = THREE.MathUtils.lerp(camera.position.y, targetY, 8 * delta);
     camera.position.z = THREE.MathUtils.lerp(camera.position.z, targetZ, 8 * delta);
 
-    camera.lookAt(player.position.x, player.position.y + 1.5, player.position.z);
+    const lookTargetY = player.position.y + 1.5 + Math.sin(cameraPitch) * 4.5;
+    camera.lookAt(player.position.x, lookTargetY, player.position.z);
   }
 
   // Cámara de depuración para capturas: ?cam=x,y,z,tx,ty,tz
@@ -1663,8 +1793,8 @@ function animate() {
       }
     });
 
-    // Animación continua de cascada, agua del foso y banderas de las torres
-    waterfallTex.offset.y -= delta * 1.35;
+    // Animación continua de cascada (flujo descendente natural), agua del foso y banderas
+    waterfallTex.offset.y += delta * 1.35;
     moatWater.tex.offset.x += delta * 0.06;
     moatWater.tex.offset.y += delta * 0.04;
     lakeWater.tex.offset.x -= delta * 0.05;

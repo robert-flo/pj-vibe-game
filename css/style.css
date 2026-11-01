@@ -1019,3 +1019,34 @@ body, html {
   background: radial-gradient(circle at 35% 35%, #38bdf8 0%, #0ea5e9 100%);
   transform: scale(0.90);
 }
+
+/* Aviso de orientación móvil */
+.orientation-hint {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(186, 230, 253, 0.45);
+  color: #bae6fd;
+  padding: 8px 18px;
+  border-radius: 24px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  z-index: 100;
+  pointer-events: none;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+}
+
+.orientation-hint.hidden {
+  display: none !important;
+}
+
+@media (orientation: landscape) {
+  .orientation-hint {
+    display: none !important;
+  }
+}
