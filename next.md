@@ -2,21 +2,23 @@
 
 > **Propósito**: Bitácora viva en la raíz de `pj-vibe-game` para registrar el estado exacto del proyecto, entregables oficiales, cambios completados y enlaces de entrega académica.
 
-**Última actualización**: 2026-11-01 11:48 (UTC-6)  
+**Última actualización**: 2026-11-01 12:04 (UTC-6)  
 **Actividad**: Semana 2 — Vibecoding Guiado (AI FOR DEVS JR. 5 - Kodigo Academy)  
 **Estudiante**: Roberto Carlos Flores Quintanilla  
 **Instructor**: Ing. Ronald Mejia  
 **Repositorio principal**: `/home/omarchy/Projects/pj-vibe-game` ([Enlace GitHub](https://github.com/robert-flo/pj-vibe-game) | [Despliegue GitHub Pages](https://robert-flo.github.io/pj-vibe-game/))  
 **Repositorio de documentación**: `/home/omarchy/Projects/pj-vibe-game-docs` ([Enlace GitHub](https://github.com/robert-flo/pj-vibe-game-docs) | [Sitio Jekyll en Vivo](https://robert-flo.github.io/pj-vibe-game-docs/))  
-**PDF Oficial de Entrega**: `/home/omarchy/Desktop/RobertoFlores-Tarea02.pdf` (Documento A4 v6 con portada institucional Kodigo, botón hero destacado de acceso al juego, resumen ejecutivo, bitácora de prompts, galería visual, matriz de incidencias resueltas y rúbrica).
+**PDF Oficial de Entrega**: `/home/omarchy/Desktop/RobertoFlores-Tarea02.pdf` (Documento A4 v7 con portada institucional Kodigo, botón hero destacado de acceso al juego, Tabla 1.1 formal académica de repositorios técnicos, resumen ejecutivo, bitácora de prompts, galería visual, matriz de incidencias resueltas y rúbrica).
 
 ---
 
 ## 1. ¿Qué está completado y publicado (`origin/main`)?
 
-0. **Jerarquía Visual y Acceso Directo Destacado al Videojuego en el Documento PDF Oficial (`RobertoFlores-Tarea02.pdf` v6)**:
+0. **Jerarquía Visual y Tabla Académica de Repositorios en el Documento PDF Oficial (`RobertoFlores-Tarea02.pdf` v7)**:
    - **Portada (Página 1)**: Tarjeta interactiva con gradiente azul (`#0284c7` a `#1e40af`) y llamado a la acción directo: `🎮 DEMO INTERACTIVA EN LÍNEA • ▶ CLIC AQUÍ PARA JUGAR: SUPER BUKELE 64`.
-   - **Resumen Ejecutivo (Página 2)**: *Hero Card* gaming con fondo oscuro estilizado, botón dorado con relieve (`#fbbf24`), enlace directo en tipografía monospace cian y badges de compatibilidad (100% navegador, PC y móvil, sin emuladores, audio N64 auténtico). Los enlaces técnicos a repositorios y documentación Jekyll fueron reubicados en una barra secundaria compacta.
+   - **Resumen Ejecutivo (Página 2)**:
+     - *Hero Card* gaming con fondo oscuro estilizado, botón dorado con relieve (`#fbbf24`), enlace directo en tipografía monospace cian y badges de compatibilidad (100% navegador, PC y móvil, sin emuladores, audio N64 auténtico).
+     - **Tabla 1.1 Formal Académica**: Se reemplazó el formato informal por una tabla técnica estandarizada (*Recurso / Entregable*, *Descripción del Contenido*, *Enlace Permanente URI*) que documenta con rigor académico el portal Jekyll, el repositorio del motor Three.js y el repositorio de documentación histórica.
    - **Conclusión (Página 6)**: Botón verde esmeralda de llamado a la acción final para garantizar acceso directo inmediato tanto al abrir el documento como al finalizar su lectura.
    - Verificado rigurosamente en **6 páginas A4** sin desbordamiento.
 
